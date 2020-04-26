@@ -1,0 +1,94 @@
+# Values to render the Helm templates.
+
+# NOTE: If this is named something else, the Kubernetes Service exposing pebble
+# will be named something else. Since the HTTPS certificate used by Pebble is
+# only valid for localhost and pebble, it is important that requests made are to
+# the host called pebble.
+fullnameOverride: pebble
+
+pebble:
+  image:
+    # repository ref: https://hub.docker.com/r/letsencrypt/pebble
+    repository: letsencrypt/pebble
+    tag: "" # overrides the chart's appVersion
+    pullPolicy: ""
+
+  # config ref: https://github.com/letsencrypt/pebble/blob/52b92744eaad895ac25b19dae429c0bdd134b764/cmd/pebble/main.go#L17
+  config:
+    listenAddress: 0.0.0.0:8443
+    managementListenAddress: 0.0.0.0:8080
+    httpPort: 80 # this is the port where outgoing HTTP-01 challenges go
+    tlsPort: 443 # this is the port where outgoing TLS-ALPN-01 challenges go
+    certificate: /etc/pebble/cert.pem
+    privateKey: /etc/pebble/key.pem
+    ocspResponderURL: ""
+    externalAccountBindingRequired: false
+    externalAccountMACKeys: {}
+
+  env:
+    # ref: https://github.com/letsencrypt/pebble#testing-at-full-speed
+    - name: PEBBLE_VA_NOSLEEP
+      value: "1"
+    # ref: https://github.com/letsencrypt/pebble#invalid-anti-replay-nonce-errors
+    - name: PEBBLE_WFE_NONCEREJECT
+      value: "0"
+    # ref: https://github.com/letsencrypt/pebble#skipping-validation
+    - name: PEBBLE_VA_ALWAYS_VALID
+      value: "0"
+    # ref: https://github.com/letsencrypt/pebble#authorization-reuse
+    - name: PEBBLE_AUTHZREUSE
+      value: "100"
+
+  resources:
+    limits:
+      cpu: 100m
+      memory: 128Mi
+    requests:
+      cpu: 50m
+      memory: 128Mi
+
+
+# Used as a DNS server for Pebble's ACME server, and can through its REST API on
+# the management port dynamically update DNS records.
+challtestsrv:
+  enabled: true
+
+  image:
+    # repository ref: https://hub.docker.com/r/letsencrypt/pebble-challtestsrv
+    repository: letsencrypt/pebble-challtestsrv
+    tag: "" # overrides the chart's appVersion
+    pullPolicy: ""
+
+  command:
+    # NOTE: DNS lookups can be configured to default to an IP. To route to a
+    #       specific Kubernetes Service by default, you can use the environment
+    #       variables set by Kubernetes.
+    defaultIPv4: "" # "$(MYSVC_SERVICE_HOST)"
+    defaultIPv6: ""
+
+  # ref: https://github.com/letsencrypt/pebble/tree/master/cmd/pebble-challtestsrv#usage
+  initPostRequests:
+    - path: set-cname
+      data:
+        host: jupyter.local
+        target: proxy-public
+
+  env: []
+
+  resources:
+    limits:
+      cpu: 100m
+      memory: 128Mi
+    requests:
+      cpu: 50m
+      memory: 128Mi
+
+
+# If you want to specify annotations, tolerations, etc, do it through this
+# escape hatch that will get merged into the respective resource that is part of
+# this Helm chart. It is problematic to try merge into an array, for example the
+# deployments containers being in a list.
+merge:
+  deployment: {}
+  service: {}
+  configmap: {}

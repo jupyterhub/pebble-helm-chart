@@ -1,0 +1,29 @@
+{{- define "pebble.service" -}}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "pebble.fullname" . }}
+  labels:
+    {{- include "pebble.labels" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  selector:
+    {{- include "pebble.selectorLabels" . | nindent 4 }}
+  ports:
+    - name: acme
+      targetPort: acme
+      port: 443
+    - name: acme-mgmt
+      targetPort: acme-mgmt
+      port: 8080
+    {{- if .Values.challtestsrv.enabled }}
+    - name: dns
+      targetPort: dns
+      port: 53
+    - name: dns-mgmt
+      targetPort: dns-mgmt
+      port: 8081
+    {{- end }}
+{{- end }}
+
+{{- include "pebble.service" . | fromYaml | merge .Values.merge.service | toYaml }}

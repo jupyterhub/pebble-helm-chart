@@ -1,0 +1,24 @@
+apiVersion: v2
+name: pebble
+version: 0.1.0
+## appVersion should be updated along with pebble releases
+## ref: https://github.com/letsencrypt/pebble/releases
+##
+appVersion: v2.3.0
+description: |
+  This Helm chart bootstraps Pebble: an ACME server (like Let's Encrypt) meant
+  for testing. Pebble is also coupled to rely on pebble-challtestsrv as a DNS
+  server. This DNS server can be configured through a REST API or configured
+  during startup to make all DNS lookup go to a specifc single IP.
+keywords:
+  - acme
+  - pebble
+  - letsencrypt
+  - ci
+  - testing
+
+home: https://github.com/consideRatio/pebble
+maintainers:
+  - name: Erik Sundell
+    email: erik@sundellopensource.se
+    url: https://github.com/consideRatio

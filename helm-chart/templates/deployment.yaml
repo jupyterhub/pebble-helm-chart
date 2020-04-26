@@ -1,0 +1,95 @@
+{{- define "pebble.deployment" -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "pebble.fullname" . }}
+  labels:
+    {{- include "pebble.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "pebble.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "pebble.selectorLabels" . | nindent 8 }}
+    spec:
+      volumes:
+        - name: pebble-config-and-tls
+          configMap:
+            name: {{ include "pebble.fullname" . }}
+      containers:
+        # Pebble is the acme server, but also expose a REST API on the
+        # management port providing access to the certificates signing the acme
+        # requests etc.
+        - name: pebble
+          image: "{{ .Values.pebble.image.repository }}:{{ .Values.pebble.image.tag | default .Chart.AppVersion }}"
+          volumeMounts:
+            - name: pebble-config-and-tls
+              mountPath: /etc/pebble
+          command: [
+            "pebble",
+            "-config", "/etc/pebble/pebble-config.json",
+            {{- if .Values.challtestsrv.enabled }}
+            "-dnsserver", ":8053",
+            {{- end }}
+          ]
+          ports:
+            - name: acme
+              containerPort: 8443
+            - name: acme-mgmt
+              containerPort: 8080
+          {{- with .Values.pebble.env }}
+          env:
+            {{- . | toYaml | nindent 12 }}
+          {{- end }}
+
+        {{- if .Values.challtestsrv.enabled }}
+        # A DNS server that can we make Pebble rely on. It's entries can be
+        # configured through a REST API on the management port, and it can on
+        # startup be configured to let all DNS lookups go to a cetain IP. A
+        # common use is to make it go to the IP in the Kubernetes provided
+        # environment variables like $(MYSVC_SERVICE_HOST).
+        - name: challtestsrv
+          image: "{{ .Values.challtestsrv.image.repository }}:{{ .Values.challtestsrv.image.tag | default .Chart.AppVersion }}"
+          # command ref: https://github.com/letsencrypt/pebble/tree/master/cmd/pebble-challtestsrv#usage
+          command: [
+            "-management", ":8081",
+            "-dns01", ":8053",
+            "-tlsalpn01", "",
+            "-http01", "",
+            "-https01", "",
+            "-defaultIPv4", {{ .Values.challtestsrv.command.defaultIPv4 | quote }},
+            "-defaultIPv6", {{ .Values.challtestsrv.command.defaultIPv6 | quote }},
+          ]
+          ports:
+            - name: dns
+              containerPort: 8053
+            - name: dns-mgmt
+              containerPort: 8081
+          {{- with .Values.challtestsrv.env }}
+          env:
+            {{- . | toYaml | nindent 12 }}
+          {{- end }}
+        
+        {{- with .Values.challtestsrv.initPostRequests }}
+        - name: challtestsrv-initializer
+          image: busybox:1.31
+          args: [
+            {{- range . }}
+            "wget",
+            "--retry-connrefused",
+            "--tries", "60",
+            "--waitretry", "1",
+            "--post-data", {{ .data | toJson | quote }},
+            "localhost:8081/{{ .path }}",
+            "&&",
+            {{- end }}
+            "sleep", "infinity",
+          ]
+        {{- end }}
+        {{- end }}
+{{- end }}
+
+{{- include "pebble.deployment" . | fromYaml | merge .Values.merge.deployment | toYaml }}
