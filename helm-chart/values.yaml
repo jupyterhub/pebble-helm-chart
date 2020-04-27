@@ -1,10 +1,5 @@
 # Values to render the Helm templates.
-
-# NOTE: If this is named something else, the Kubernetes Service exposing pebble
-# will be named something else. Since the HTTPS certificate used by Pebble is
-# only valid for localhost and pebble, it is important that requests made are to
-# the host called pebble.
-fullnameOverride: pebble
+fullnameOverride: ""
 
 pebble:
   image:
@@ -19,8 +14,8 @@ pebble:
     managementListenAddress: 0.0.0.0:8080
     httpPort: 80 # this is the port where outgoing HTTP-01 challenges go
     tlsPort: 443 # this is the port where outgoing TLS-ALPN-01 challenges go
-    certificate: /etc/pebble/cert.pem
-    privateKey: /etc/pebble/key.pem
+    certificate: /etc/pebble/tls-leaf/cert.pem
+    privateKey: /etc/pebble/tls-leaf/key.pem
     ocspResponderURL: ""
     externalAccountBindingRequired: false
     externalAccountMACKeys: {}

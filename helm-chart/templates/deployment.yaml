@@ -16,9 +16,31 @@ spec:
         {{- include "pebble.selectorLabels" . | nindent 8 }}
     spec:
       volumes:
-        - name: pebble-config-and-tls
+        - name: pebble-config-and-tls-root
           configMap:
             name: {{ include "pebble.fullname" . }}
+        - name: pebble-tls-leaf
+          emptyDir: {}
+
+      initContainers:
+        - name: pebble-tls-leaf-creation
+          image: twalter/minica:latest
+          volumeMounts:
+            - name: pebble-config-and-tls-root
+              mountPath: /input
+            # The Docker image's WORKDIR is /output, and minica will create a
+            # folder like the first domain name (localhost) and put cert.pem and
+            # key.pem into it.
+            - name: pebble-temp-tls-leaf
+              mountPath: /output/localhost
+          command: [
+            "minica",
+            "-ca-cert", "/etc/pebble/root-cert.pem",
+            "-ca-key", "/etc/pebble/root-key.pem",
+            "-domains", {{ include "pebble.domains" . | quote }},
+            "-ip-addresses", "127.0.0.1",
+          ]
+
       containers:
         # Pebble is the acme server, but also expose a REST API on the
         # management port providing access to the certificates signing the acme
@@ -26,8 +48,11 @@ spec:
         - name: pebble
           image: "{{ .Values.pebble.image.repository }}:{{ .Values.pebble.image.tag | default .Chart.AppVersion }}"
           volumeMounts:
-            - name: pebble-config-and-tls
-              mountPath: /etc/pebble
+            - name: pebble-config-and-tls-root
+              subPath: pebble-config.json
+              mountPath: /etc/pebble/pebble-config.json
+            - name: pebble-temp-tls-leaf
+              mountPath: /etc/pebble/tls-leaf
           command: [
             "pebble",
             "-config", "/etc/pebble/pebble-config.json",

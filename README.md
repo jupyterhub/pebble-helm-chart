@@ -104,19 +104,22 @@ exposed root certificate key, so don't trust this any more than you trust HTTP,
 because the public key can be used to decipher the traffic.
 
 ```yaml
-# ... within a Pod specification
+# ... within a Pod specification template of a Helm chart
 volumes:
   - name: pebble-cert
     configMap:
-      name: pebble # verify this matches
+      # ... if the Chart depends on the Pebble Helm chart
+      name: {{ .Release.Name }}-pebble
+      # ... else if the Pebble Helm chart was installed standalone (in the same namespace!)
+      name: pebble
 containers:
   - name: my-container-with-a-lego-acme-client
     # ...
     volumeMounts:
       - name: pebble-cert
-        subPath: pebble.minica.pem
-        mountPath: /etc/ssl/cert/pebble.minica.pem
+        subPath: root-cert.pem
+        mountPath: /etc/ssl/cert/pebble-root-cert.pem
     env:
       - name: LEGO_CA_CERTIFICATES
-        value: /etc/ssl/cert/pebble.minica.pem
+        value: /etc/ssl/cert/pebble-root-cert.pem
 ```

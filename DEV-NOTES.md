@@ -14,13 +14,21 @@ Idea:
     no matter if they come from dependency charts because Helm treats all
     chart's resources, dependencies or not, like a big set when it installs
     them.
-- Allow injectiong of CNAMEs on startup ANYTHING -> my-svc for example.
-  - Perhaps: this could perhaps be done through a postStart exec lifecycle hook
+- DONE: Allow injectiong of CNAMEs on startup ANYTHING -> my-svc for example.
+  - Idea: this could perhaps be done through a postStart exec lifecycle hook
     with a mounted script or executable, or with a third party container.
+    
+  - NO: Mounting script/executable strategy failed. The docker images are scratch
+    images and have no shell etc, so a full executable is needed to be mounted,
+    but my smallest became 1.8 MB, which breaches the k8s api-servers storage of
+    objects of 1MB.
+  
+  - YES: Using a sidecar container with a dedicated image could work, but why not use
+    a busybox with wget? This is what I'm going for now.
 - Set securityContext
 
 Scope:
 - Limit to use in the same namespace
 
-With initPostRequests, pebble can communicate with other namespaces
-With dynamic creation of certs from a fixed root cert, pebble can be located wherever.
+DONE: With initPostRequests, pebble can communicate with other namespaces
+DONE: With dynamic creation of certs from a fixed root cert, pebble can be located wherever.
