@@ -6,23 +6,45 @@ metadata:
   labels:
     {{- include "pebble.labels" . | nindent 4 }}
 spec:
-  type: ClusterIP
+  {{- if .Values.service.enableNodePorts }}
+  type: NodePort
+  {{- end }}
   selector:
     {{- include "pebble.selectorLabels" . | nindent 4 }}
   ports:
     - name: acme
       targetPort: acme
-      port: 443
+      port: 8443
+      {{- if .Values.service.enableNodePorts }}
+      nodePort: {{ .Values.service.acmeNodePort }}
+      {{- end }}
     - name: acme-mgmt
       targetPort: acme-mgmt
       port: 8080
+      {{- if .Values.service.enableNodePorts }}
+      nodePort: {{ .Values.service.acmeMgmtNodePort }}
+      {{- end }}
     {{- if .Values.challtestsrv.enabled }}
-    - name: dns
-      targetPort: dns
-      port: 53
+    - name: dns-udp
+      targetPort: dns-udp
+      protocol: UDP
+      port: 8053
+      {{- if .Values.service.enableNodePorts }}
+      nodePort: {{ .Values.service.dnsNodePort }}
+      {{- end }}
+    - name: dns-tcp
+      targetPort: dns-tcp
+      protocol: TCP
+      port: 8053
+      {{- if .Values.service.enableNodePorts }}
+      nodePort: {{ .Values.service.dnsNodePort }}
+      {{- end }}
     - name: dns-mgmt
       targetPort: dns-mgmt
       port: 8081
+      {{- if .Values.service.enableNodePorts }}
+      nodePort: {{ .Values.service.dnsMgmtNodePort }}
+      {{- end }}
     {{- end }}
 {{- end }}
 

@@ -15,11 +15,13 @@ spec:
       labels:
         {{- include "pebble.selectorLabels" . | nindent 8 }}
     spec:
+      terminationGracePeriodSeconds: 1
+
       volumes:
         - name: pebble-config-and-tls-root
           configMap:
             name: {{ include "pebble.fullname" . }}
-        - name: pebble-tls-leaf
+        - name: pebble-temp-tls-leaf
           emptyDir: {}
 
       initContainers:
@@ -35,8 +37,8 @@ spec:
               mountPath: /output/localhost
           command: [
             "minica",
-            "-ca-cert", "/etc/pebble/root-cert.pem",
-            "-ca-key", "/etc/pebble/root-key.pem",
+            "-ca-cert", "/input/root-cert.pem",
+            "-ca-key", "/input/root-key.pem",
             "-domains", {{ include "pebble.domains" . | quote }},
             "-ip-addresses", "127.0.0.1",
           ]
@@ -47,12 +49,14 @@ spec:
         # requests etc.
         - name: pebble
           image: "{{ .Values.pebble.image.repository }}:{{ .Values.pebble.image.tag | default .Chart.AppVersion }}"
+          # image: busybox
           volumeMounts:
             - name: pebble-config-and-tls-root
               subPath: pebble-config.json
               mountPath: /etc/pebble/pebble-config.json
             - name: pebble-temp-tls-leaf
-              mountPath: /etc/pebble/tls-leaf
+              mountPath: /etc/pebble/temp-tls-leaf
+          # command: [ "cat", "/etc/pebble/pebble-config.json" ]
           command: [
             "pebble",
             "-config", "/etc/pebble/pebble-config.json",
@@ -80,6 +84,7 @@ spec:
           image: "{{ .Values.challtestsrv.image.repository }}:{{ .Values.challtestsrv.image.tag | default .Chart.AppVersion }}"
           # command ref: https://github.com/letsencrypt/pebble/tree/master/cmd/pebble-challtestsrv#usage
           command: [
+            "pebble-challtestsrv",
             "-management", ":8081",
             "-dns01", ":8053",
             "-tlsalpn01", "",
@@ -89,7 +94,11 @@ spec:
             "-defaultIPv6", {{ .Values.challtestsrv.command.defaultIPv6 | quote }},
           ]
           ports:
-            - name: dns
+            - name: dns-udp
+              protocol: UDP
+              containerPort: 8053
+            - name: dns-tcp
+              protocol: TCP
               containerPort: 8053
             - name: dns-mgmt
               containerPort: 8081
@@ -101,18 +110,9 @@ spec:
         {{- with .Values.challtestsrv.initPostRequests }}
         - name: challtestsrv-initializer
           image: busybox:1.31
-          args: [
-            {{- range . }}
-            "wget",
-            "--retry-connrefused",
-            "--tries", "60",
-            "--waitretry", "1",
-            "--post-data", {{ .data | toJson | quote }},
-            "localhost:8081/{{ .path }}",
-            "&&",
-            {{- end }}
-            "sleep", "infinity",
-          ]
+          command: [ "sh", "-c" ]
+          args:
+            - {{ range . }}wget --post-data {{ .data | toJson | squote }} localhost:8081/{{ .path }} && {{ end }} sleep infinity
         {{- end }}
         {{- end }}
 {{- end }}

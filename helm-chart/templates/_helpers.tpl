@@ -39,6 +39,5 @@ localhost,
 {{- $name }},
 {{- $name }}.{{ $ns }},
 {{- $name }}.{{ $ns }}.svc,
-{{- $name }}.{{ $ns }}.svc.cluster,
 {{- $name }}.{{ $ns }}.svc.cluster.local
 {{- end }}

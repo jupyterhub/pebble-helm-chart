@@ -1,0 +1,6 @@
+ 
+charts:
+    - name: pebble
+      repo:
+        git: jupyterhub/helm-chart
+        published: https://jupyterhub.github.io/helm-chart
