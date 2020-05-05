@@ -13,11 +13,12 @@ description: |
 keywords:
   - acme
   - pebble
+  - pebble-challtestsrv
   - letsencrypt
   - ci
   - testing
 
-home: https://github.com/consideRatio/pebble
+home: https://github.com/jupyterhub/pebble-helm-chart
 maintainers:
   - name: Erik Sundell
     email: erik@sundellopensource.se
