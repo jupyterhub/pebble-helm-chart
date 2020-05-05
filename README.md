@@ -1,58 +1,37 @@
-# Pebble Helm chart - Let's Encrypt in your Kubernetes CI environment!
+# Pebble Helm chart - Let's Encrypt for unreachable CI environment with Kubernetes!
 
 > __WARNING__: Pebble as an ACME server and this Helm chart is _only_ meant for testing purposes, it is _not secure_ and _not meant for production_.
 
-[Pebble](https://github.com/letsencrypt/pebble) is an [ACME](https://letsencrypt.org/docs/glossary/#def-ACME) server like [Let's Encrypt](https://letsencrypt.org/). They can provide [TLS](https://letsencrypt.org/docs/glossary/#def-TLS) [certificates](https://letsencrypt.org/docs/glossary/#def-certificate) needed for HTTPS to [ACME clients](https://letsencrypt.org/docs/client-options/) that are able to prove domain name control through an [ACME challenge](https://letsencrypt.org/docs/challenge-types/).
+[Pebble](https://github.com/letsencrypt/pebble) is an [ACME](https://letsencrypt.org/docs/glossary/#def-ACME) server like [Let's Encrypt](https://letsencrypt.org/). ACME servers can provide [TLS](https://letsencrypt.org/docs/glossary/#def-TLS) [certificates](https://letsencrypt.org/docs/glossary/#def-certificate) for HTTP over TLS ([HTTPS](https://en.wikipedia.org/wiki/HTTPS)) to [ACME clients](https://letsencrypt.org/docs/client-options/) that are able to prove control over a domain name through an [ACME challenge](https://letsencrypt.org/docs/challenge-types/).
 
-This [Helm chart](https://helm.sh/docs/topics/charts/) makes it easy to install Pebble in a [Kubernetes cluster](https://kubernetes.io/) along with [a DNS server](https://github.com/letsencrypt/pebble/tree/master/cmd/pebble-challtestsrv) to manipulate Pebble.
+This [Helm chart](https://helm.sh/docs/topics/charts/) makes it easy to install Pebble in a [Kubernetes cluster](https://kubernetes.io/) using [Helm](https://helm.sh/) along with an optional [utility server](https://github.com/letsencrypt/pebble/tree/master/cmd/pebble-challtestsrv) that can act as a configurable DNS server to influence Pebble DNS lookups.
 
+## Motivation
 
+To test interactions against an ACME server like Let's Encrypt from an _unreachable_ CI environment like most ephemeral CI environments are, using [Let's Encrypts staging environment](https://letsencrypt.org/docs/staging-environment/) likely won't work, at least if you are using the HTTP-01 ACME challenge.
 
-## ... why not use Let's Encrypt's staging servers instead?
-
-In the commonly used [HTTP-01 ACME challenge](https://letsencrypt.org/docs/challenge-types/#http-01-challenge), an ACME client proves its control of a domain's web server. During this challenge, the ACME server will lookup the domain name's IP and make a web request to it, and thats the problem! In an ephemeral CI environment, it is likely impossible to receive new incomming from Let's Encrypt's servers.
+In the commonly used [HTTP-01 ACME challenge](https://letsencrypt.org/docs/challenge-types/#http-01-challenge), an ACME client proves its control of a domain's web server. During this challenge, the ACME server will lookup the domain name's IP and make a web request to it, and that's the problem! In an ephemeral CI environment, it is likely impossible to receive new incoming connections from Let's Encrypt's servers.
 
 [![](https://mermaid.ink/img/eyJjb2RlIjoic2VxdWVuY2VEaWFncmFtXG4gIGF1dG9udW1iZXJcbiAgcGFydGljaXBhbnQgV2ViIFNlcnZlclxuICBwYXJ0aWNpcGFudCBBQ01FIENsaWVudFxuICBwYXJ0aWNpcGFudCBBQ01FIFNlcnZlclxuICBwYXJ0aWNpcGFudCBETlMgU2VydmVyXG4gIFxuICBhY3RpdmF0ZSBBQ01FIENsaWVudFxuXHRBQ01FIENsaWVudCAtPj4gQUNNRSBTZXJ2ZXI6IEknbSBkb2dzLmluZm8hXG4gIGRlYWN0aXZhdGUgQUNNRSBDbGllbnRcbiAgYWN0aXZhdGUgQUNNRSBTZXJ2ZXJcbiAgYWN0aXZhdGUgQUNNRSBTZXJ2ZXJcbiAgQUNNRSBTZXJ2ZXIgLS0-PiBBQ01FIENsaWVudDogUHJvb3ZlIGl0ISBTYXkgbWVlZW9vdyFcbiAgZGVhY3RpdmF0ZSBBQ01FIFNlcnZlclxuICBhY3RpdmF0ZSBBQ01FIENsaWVudFxuICBBQ01FIENsaWVudCAtLT4-IFdlYiBTZXJ2ZXI6IC4uLiB3ZSBnb3QgdG8gbWVlZW9vdyAuLi5cbiAgZGVhY3RpdmF0ZSBBQ01FIENsaWVudFxuICBOb3RlIHJpZ2h0IG9mIEFDTUUgU2VydmVyOiBJbmRlcGVuZGVudCBsb29rdXAhXG5cdEFDTUUgU2VydmVyIC0-PiBETlMgU2VydmVyOiBkb2dzLmluZm8_XG4gIGRlYWN0aXZhdGUgQUNNRSBTZXJ2ZXJcbiAgYWN0aXZhdGUgRE5TIFNlcnZlclxuICBETlMgU2VydmVyIC0-PiBBQ01FIFNlcnZlcjogMTMuMzcuMTMuMzchXG4gIGRlYWN0aXZhdGUgRE5TIFNlcnZlclxuICBhY3RpdmF0ZSBBQ01FIFNlcnZlclxuICBOb3RlIGxlZnQgb2YgQUNNRSBTZXJ2ZXI6IE5ldyBjb25uZWN0aW9uIVxuICBBQ01FIFNlcnZlciAtPj4gV2ViIFNlcnZlcjogSGkgZG9ncy5pbmZvIVxuICBkZWFjdGl2YXRlIEFDTUUgU2VydmVyXG4gIGFjdGl2YXRlIFdlYiBTZXJ2ZXJcbiAgV2ViIFNlcnZlciAtPj4gQUNNRSBTZXJ2ZXI6IG1lZWVvb3dcbiAgZGVhY3RpdmF0ZSBXZWIgU2VydmVyXG4gIGFjdGl2YXRlIEFDTUUgU2VydmVyXG4gIEFDTUUgU2VydmVyIC0-PiBBQ01FIENsaWVudDogVExTIENlcnRpZmljYXRlISBGZXRjaCFcbiAgZGVhY3RpdmF0ZSBBQ01FIFNlcnZlclxuIiwibWVybWFpZCI6eyJ0aGVtZSI6ImZvcmVzdCJ9LCJ1cGRhdGVFZGl0b3IiOmZhbHNlfQ)](https://mermaid-js.github.io/mermaid-live-editor/#/edit/eyJjb2RlIjoic2VxdWVuY2VEaWFncmFtXG4gIGF1dG9udW1iZXJcbiAgcGFydGljaXBhbnQgV2ViIFNlcnZlclxuICBwYXJ0aWNpcGFudCBBQ01FIENsaWVudFxuICBwYXJ0aWNpcGFudCBBQ01FIFNlcnZlclxuICBwYXJ0aWNpcGFudCBETlMgU2VydmVyXG4gIFxuICBhY3RpdmF0ZSBBQ01FIENsaWVudFxuXHRBQ01FIENsaWVudCAtPj4gQUNNRSBTZXJ2ZXI6IEknbSBkb2dzLmluZm8hXG4gIGRlYWN0aXZhdGUgQUNNRSBDbGllbnRcbiAgYWN0aXZhdGUgQUNNRSBTZXJ2ZXJcbiAgYWN0aXZhdGUgQUNNRSBTZXJ2ZXJcbiAgQUNNRSBTZXJ2ZXIgLS0-PiBBQ01FIENsaWVudDogUHJvb3ZlIGl0ISBTYXkgbWVlZW9vdyFcbiAgZGVhY3RpdmF0ZSBBQ01FIFNlcnZlclxuICBhY3RpdmF0ZSBBQ01FIENsaWVudFxuICBBQ01FIENsaWVudCAtLT4-IFdlYiBTZXJ2ZXI6IC4uLiB3ZSBnb3QgdG8gbWVlZW9vdyAuLi5cbiAgZGVhY3RpdmF0ZSBBQ01FIENsaWVudFxuICBOb3RlIHJpZ2h0IG9mIEFDTUUgU2VydmVyOiBJbmRlcGVuZGVudCBsb29rdXAhXG5cdEFDTUUgU2VydmVyIC0-PiBETlMgU2VydmVyOiBkb2dzLmluZm8_XG4gIGRlYWN0aXZhdGUgQUNNRSBTZXJ2ZXJcbiAgYWN0aXZhdGUgRE5TIFNlcnZlclxuICBETlMgU2VydmVyIC0-PiBBQ01FIFNlcnZlcjogMTMuMzcuMTMuMzchXG4gIGRlYWN0aXZhdGUgRE5TIFNlcnZlclxuICBhY3RpdmF0ZSBBQ01FIFNlcnZlclxuICBOb3RlIGxlZnQgb2YgQUNNRSBTZXJ2ZXI6IE5ldyBjb25uZWN0aW9uIVxuICBBQ01FIFNlcnZlciAtPj4gV2ViIFNlcnZlcjogSGkgZG9ncy5pbmZvIVxuICBkZWFjdGl2YXRlIEFDTUUgU2VydmVyXG4gIGFjdGl2YXRlIFdlYiBTZXJ2ZXJcbiAgV2ViIFNlcnZlciAtPj4gQUNNRSBTZXJ2ZXI6IG1lZWVvb3dcbiAgZGVhY3RpdmF0ZSBXZWIgU2VydmVyXG4gIGFjdGl2YXRlIEFDTUUgU2VydmVyXG4gIEFDTUUgU2VydmVyIC0-PiBBQ01FIENsaWVudDogVExTIENlcnRpZmljYXRlISBGZXRjaCFcbiAgZGVhY3RpdmF0ZSBBQ01FIFNlcnZlclxuIiwibWVybWFpZCI6eyJ0aGVtZSI6ImZvcmVzdCJ9LCJ1cGRhdGVFZGl0b3IiOmZhbHNlfQ)
 
 
 
-## Use case
-
-### Good example
-You develop an application that can be deployed with Kubernetes resources, and would like to verify that an automatic acquisition of TLS certificates from Let's Encrypt works as intended in a ephemeral CI environment.
-
-### Terrible example
-You want to get TLS certificates to secure HTTP traffic with HTTPS.
-
-> __WARNING:__ While Pebble acts like a certificate authority, it should not be an certificate authority you trust. It is exposing keys and such for testing purposes. Consider all associated TLS communication as unencrypted.
-
-
-
 ## Installation
-
-You can either install this Helm chart by itself or install it as a conditional dependency activated during tests.
 
 ### Standalone installation (recommended)
 ```shell
-# put Helm chart configuration here...
-touch pebble-config.yaml
-
-helm repo add jupyterhub 
+helm repo add jupyterhub https://jupyterhub.github.io/helm-chart/
 helm repo update
-helm upgrade pebble jupyterhub/pebble --install --cleanup-on-fail --values pebble-config.yaml
+helm upgrade install jupyterhub/pebble
 ```
 
 ### Sub-chart installation
-> __NOTE:__ This will make a packaged Helm chart contain the sub-charts Helm templates.
+A packaged Helm chart contain the sub-charts Helm templates, and is therefore not recommended for Helm charts being packaged for distribution.
 
-Helm 3 support `Chart.yaml` files with `apiVersion: v2`, and there you can specify dependencies directly. If you want to remain compatible with Helm 2 your `Chart.yaml` has to have `apiVersion: v1` and the chart dependencies need to be specified in a separate `requirements.yaml` file.
-
-If you install Pebble like this, you may want to make it conditionally available using [_tags_ or _conditions_](https://helm.sh/docs/topics/charts/#tags-and-condition-fields-in-dependencies).
-
-Configuration of this chart installed as a dependency to another chart [should be nested]((https://helm.sh/docs/chart_template_guide/subcharts_and_globals/#overriding-values-from-a-parent-chart)) under a key named like the dependency or its alias.
+Installing Pebble as part of another chart should likely be made conditional using [_tags_ or _conditions_](https://helm.sh/docs/topics/charts/#tags-and-condition-fields-in-dependencies).
 
 ```yaml
-# Chart.yaml - modern style
+# Chart.yaml - Helm 3 only, see note below for Helm 2 use.
 apiVersion: v2
 name: my-chart
 # ...
@@ -61,22 +40,51 @@ dependencies:
     version: 0.1.0
     repository: https://jupyterhub.github.io/helm-chart/
     tags:
-    - ci
+      - ci
 ```
+
+> __NOTE:__ Helm 3 support `Chart.yaml` files with `apiVersion: v2`, and there you can specify chart dependencies directly. If you want to remain compatible with Helm 2 your `Chart.yaml` file has to have `apiVersion: v1` and the chart dependencies need to be specified in a separate `requirements.yaml` file.
 
 
 
 ## Helm chart configuration
 
-### Configuration mechanism
-Helm charts render templates using passed in a [YAML](https://www.youtube.com/watch?v=cdLNKUoMc6c) file, and this is how you configure Helm charts: by overriding values that renders templates. This is done with the `helm` CLI through the `--values my-values.yaml` flag.
+### Configuring Helm charts
+Helm charts render templates into Kubernetes yaml files using configurable values. A Helm chart comes with default values, and these can be overridden during chart installation and upgrades, for example with the `--values` flag to pass a [YAML](https://www.youtube.com/watch?v=cdLNKUoMc6c) file or with the `--set` flag.
 
-### Configuring the DNS Server
+To configure the Pebble Helm chart, create a `my-values.yaml` file to pass with `--values`. If you have installed it as a sub-chart, you should [nest the configuration](https://helm.sh/docs/chart_template_guide/subcharts_and_globals/#overriding-values-from-a-parent-chart).
 
-Pebble can optionally be deployed with a DNS server next to it that Pebble then will use for DNS lookups. This DNS server can then be configured to point all lookups to a specific IP or have CNAME entries to point domains to other domains such as directing `example.local` to `mysvc.mynamespace`.
+### Pebble configuration
+#### Mischievous behavior?
+Pebble is developed to test ACME clients and ensure they are robust, so it can intentionally act mischievous.
+
+The default of this Helm chart seen below configures Pebble to ensure speedy certificate acquisition. Note that if you provide an array to `pebble.env`, it will override the default array of environment variables.
+
+```yaml
+pebble:
+  env:
+    # ref: https://github.com/letsencrypt/pebble#testing-at-full-speed
+    - name: PEBBLE_VA_NOSLEEP
+      value: "1"
+```
+
+See [Pebble's documentation](https://github.com/letsencrypt/pebble#testing-at-full-speed) for more info about its mischievous behavior.
+
+#### Custom challenge ports
+Pebble will connect with a domain's web-server during HTTP-01 (80) and TLS-ALPN-01 (443) challenges with specific ports, and you can configure those. This is useful if your web-server is behind a Kubernetes service exposing it on port 8080 for example.
+
+```yaml
+pebble:
+  config:
+    pebble:
+      httpPort: 80 # this is the port where outgoing HTTP-01 challenges go
+      tlsPort: 443 # this is the port where outgoing TLS-ALPN-01 challenges go
+```
+
+### The configurable DNS Server
+Pebble can optionally be deployed with a configurable DNS server next to it that Pebble then will use for DNS lookups. This DNS server can for example be configured to resolve all domain lookups to a specific IP or have CNAME entries to point a domain to another domains, such as directing `example.local` to `mysvc.mynamespace`.
 
 #### Enabling the configurable DNS Server
-
 ```yaml
 challtestsrv:
   enabled: true
@@ -94,8 +102,8 @@ challtestsrv:
     # defaultIPv4: $(MYSVC_SERVICE_HOST)
 ```
 
-#### CNAME and more: Any domain -> Any domain
-To initialize the DNS server with custom entries, we can use [its REST API](https://github.com/letsencrypt/pebble/tree/master/cmd/pebble-challtestsrv) and send POST requests to it when it starts up.
+#### CNAME (and other records): Any domain -> Any domain
+To initialize the DNS server with records, we can use its [management REST API](https://github.com/letsencrypt/pebble/tree/master/cmd/pebble-challtestsrv) and send POST requests to it when it starts up.
 
 Here is an example to add a CNAME record pointing to a [Kubernetes Service's domain name](https://kubernetes.io/docs/concepts/services-networking/service/#dns).
 
@@ -108,61 +116,34 @@ challtestsrv:
         target: my-acme-client.my-namespace
 ```
 
-### Configuring Pebble
-
-### Mischievous behavior?
-Pebble is developed to test ACME clients and ensure they are robust, so it can intentionally act mischievous.
-
-The default of this Helm chart differs from Pebble's own defaults by making Pebble avoid slowing down certificate acquisition. See [Pebble's documentation](https://github.com/letsencrypt/pebble#testing-at-full-speed) for more info.
-
-Below is the chart's default configuration of Pebble through environment variables. Note that if you modify `pebble.env` at all, you will override the entire array.
-
-```yaml
-pebble:
-  env:
-    # ref: https://github.com/letsencrypt/pebble#testing-at-full-speed
-    - name: PEBBLE_VA_NOSLEEP
-      value: "1"
-```
-
-#### Custom challenge ports
-You can configure Pebble to connect with a domain's webserers in HTTP-01 (80) and TLS-ALPN-01 (443) challanges to non-default ports. Perhaps your web server is behind a Kubernetes service exposing it on port 8080 for example.
-
-```yaml
-pebble:
-  config:
-    pebble:
-      httpPort: 80 # this is the port where outgoing HTTP-01 challenges go
-      tlsPort: 443 # this is the port where outgoing TLS-ALPN-01 challenges go
-```
-
 
 
 ## ACME Client configuration
 
-The [ACME client](https://letsencrypt.org/docs/client-options/) needs to be aware of where to reach the ACME server (Pebble). It also needs to trust the TLS certificates used by Pebble as this communication will be using HTTPS and certificates generated before Pebble starts depending on its service name.
+The [ACME client](https://letsencrypt.org/docs/client-options/) should be configured to work against the Pebble ACME server. The ACME client also needs to explicitly trust a root TLS certificates that has signed the leaf TLS certificate used by Pebble for the ACME communication which will be made over HTTPS.
 
-### 1. The ACME Server's URL
+### 1. URL to Pebble
+The ACME client should communicate with something like `https://pebbles-service-name.pebbles-namespace:8443/dir`. The namespace part can be omitted if Pebble is in the same namespace as the ACME client, and `pebbles-service-name` can be found with `kubectl get svc --all-namespaces | grep pebble`.
 
-The ACME client should communicate with something like `https://pebbles-service-name.pebbles-namespace:8443/dir`. The namespace part can be omitted if Pebble is in the same namespace as the ACME client.
+### 2. Trust Pebble's root TLS certificate
+> __WARNING:__ All HTTPS communication should be treated as unsafe HTTP communication! This is only meant for testing!
 
-### 2. A TLS certificate to trust
-
-> __WARNING:__ All HTTPS communication following trusting any certificates associated with Pebble should be treated as unsafe HTTP communication.
-
-The ACME client and anything communicating with Pebble's actual ACME Server or [management REST API](https://github.com/letsencrypt/pebble#management-interface) needs to trust [this root certificate](helm-chart/files/root-cert.pem). Its associated [_publicly exposed key_](helm-chart/files/root-key.pem) has signed the leaf certificate Pebble will use the HTTPS communication on port 8443 and 8080.
+The ACME client and anything communicating with Pebble's actual ACME Server or [management REST API](https://github.com/letsencrypt/pebble#management-interface) needs to trust [this root certificate](helm-chart/files/root-cert.pem). Its associated [_publicly exposed key_](helm-chart/files/root-key.pem) has signed the leaf certificate Pebble will use the HTTPS communication on port 8443 (Pebble's ACME server) and 8080 (Pebble's REST API with `/roots/0` etc.).
 
 [![](https://mermaid.ink/img/eyJjb2RlIjoiZ3JhcGggVERcbiAgc3ViZ3JhcGggUGViYmxlLUNoYWxsdGVzdHNydlxuICBkbnMoRE5TKVxuICBkbnMtbWdtdChETlMgTWFuYWdlbWVudClcbiAgZW5kXG5cbiAgc3ViZ3JhcGggUGViYmxlXG4gIGFjbWUoQUNNRSkgLi0-fHVkcCt0Y3A6Ly9wZWJibGU6ODA1M3wgZG5zXG4gIGFjbWUtbWdtdChBQ01FIE1hbmFtZ2VtZW50KVxuICBlbmRcbiAgXG4gIGNsaWVudCAtLT58aHR0cHM6Ly9wZWJibGU6ODQ0M3wgYWNtZVxuICBjbGllbnQoQUNNRSBjbGllbnQpXG4gIGRldihEZXZlbG9wZXIgLyBDSSlcbiAgZGV2IC0tPnxodHRwczovL3BlYmJsZTo4MDgwfCBhY21lLW1nbXRcbiAgZGV2IC4tPnxodHRwOi8vcGViYmxlOjgwODF8IGRucy1tZ210XG4iLCJtZXJtYWlkIjp7InRoZW1lIjoiZm9yZXN0In0sInVwZGF0ZUVkaXRvciI6ZmFsc2V9)](https://mermaid-js.github.io/mermaid-live-editor/#/edit/eyJjb2RlIjoiZ3JhcGggVERcbiAgc3ViZ3JhcGggUGViYmxlLUNoYWxsdGVzdHNydlxuICBkbnMoRE5TKVxuICBkbnMtbWdtdChETlMgTWFuYWdlbWVudClcbiAgZW5kXG5cbiAgc3ViZ3JhcGggUGViYmxlXG4gIGFjbWUoQUNNRSkgLi0-fHVkcCt0Y3A6Ly9wZWJibGU6ODA1M3wgZG5zXG4gIGFjbWUtbWdtdChBQ01FIE1hbmFtZ2VtZW50KVxuICBlbmRcbiAgXG4gIGNsaWVudCAtLT58aHR0cHM6Ly9wZWJibGU6ODQ0M3wgYWNtZVxuICBjbGllbnQoQUNNRSBjbGllbnQpXG4gIGRldihEZXZlbG9wZXIgLyBDSSlcbiAgZGV2IC0tPnxodHRwczovL3BlYmJsZTo4MDgwfCBhY21lLW1nbXRcbiAgZGV2IC4tPnxodHRwOi8vcGViYmxlOjgwODF8IGRucy1tZ210XG4iLCJtZXJtYWlkIjp7InRoZW1lIjoiZm9yZXN0In0sInVwZGF0ZUVkaXRvciI6ZmFsc2V9)
 
 #### Avoid confusion: there are two root certificates
-
 The other root certificate is what Pebble use to sign certificates for its ACME clients. Pebble recreate this root certificate on startup and expose it and its associated key through the management REST API on `https://pebble:8080/roots/0` without any authorization.
 
 ### Example ACME client configuration
-The ACME client needs to have the root certificate to trust, and then it must be configured to use it.
+The ACME client will need the root certificate to trust, and be configured to trust it.
 
 #### Creating or re-using a ConfigMap
-It can be useful to have the root certificate the ACME client needs to trust within a ConfigMap that can be mounted as a file on the ACME client pod. If the Pebble Helm chart is installed in the ACME client's namespace, we can reuse a ConfigMap from it that contains the root certificate to trust, otherwise you can create one like this.
+A Kubernetes ConfigMap can contain the root certificate to trust, and then be mounted as a file in the ACME client's pod's container.
+
+If the Pebble Helm chart is installed in the ACME client's namespace, we can reuse a ConfigMap from it that contains the root certificate to trust. The ConfigMap's name can be found with `kubectl get cm --all-namespaces | grep pebble`.
+
+Otherwise, you can create create a ConfigMap with the root certificate like this.
 
 ```yaml
 cat <<EOF | kubectl apply --namespace <namespace-of-acme-client> -f -
@@ -196,19 +177,16 @@ EOF
 ```
 
 #### Mounting from a ConfigMap
-
 ```yaml
 # ... within a Pod specification
 volumes:
   - name: pebble-root-cert
     configMap:
-      # ... if the Pebble Helm chart was installed standalone
-      #     in the same namespace, with a release name of pebble.
       name: pebble
-      ## ... if the Pebble chart was installed as a subchart.
+      ## ... if the Pebble chart was installed as a sub-chart.
       #name: {{ .Release.Name }}-pebble
 containers:
-  - name: my-container-with-a-lego-acme-client
+  - name: my-container-with-an-acme-client
     # ...
     volumeMounts:
       - name: pebble-root-cert
@@ -216,49 +194,33 @@ containers:
         mountPath: /etc/pebble/root-cert.pem
 ```
 
-#### Using LEGO and Pebble's ConfigMap
-
-A popular ACME client in Kubernetes is [LEGO](https://github.com/go-acme/lego). It can be configured to trust a root certificate and its signed leaf certificates if it can be located with the `LEGO_CA_CERTIFICATES` environment variable.
-
-This Helm chart has the root certificate available in a ConfigMap that can be reused (`kubectl describe configmap --namespace <namespace> pebble`), but only if the Pebble Helm chart was installed in the same namespace as the ACME client pod that will mount it. It is not possible to cannot mount a ConfigMap from another namespace!
-
-Re-using Pebble's ConfigMap with the root certificate, mounting it on a pod with an LEGO ACME client and configuring LEGO to use it would look something like this.
+#### Using the root certificate
+Configuring the ACME client to trust a certain provided root certificate will depend on the ACME client. But as an example, a popular ACME client in Kubernetes contexts is [LEGO](https://github.com/go-acme/lego). LEGO can be configured to trust a root certificate and its signed leaf certificates if a file path is provided through the `LEGO_CA_CERTIFICATES` environment variable.
 
 ```yaml
 # ... within a Pod specification template of a Helm chart
-volumes:
-  - name: pebble-root-cert
-    configMap:
-      # ... if the Pebble chart is a dependency to another Helm chart
-      name: {{ .Release.Name }}-pebble
-      # ... if the Pebble Helm chart was installed standalone (in the same namespace!)
-      name: pebble
 containers:
   - name: my-container-with-a-lego-acme-client
     # ...
-    volumeMounts:
-      - name: pebble-root-cert
-        subPath: root-cert.pem
-        mountPath: /etc/ssl/cert/pebble-root-cert.pem
     env:
       - name: LEGO_CA_CERTIFICATES
-        value: /etc/ssl/cert/pebble-root-cert.pem
+        value: /etc/pebble/root-cert.pem
 ```
 
 
-## Tips and tricks
 
-### Use K8s Services' DNS entries
+## Related tips and tricks
 
-Often you don't need to use the configurable DNS server to accomplish what you want. When using it, it is only used by Pebble and pods explicitly configured to use it.
+### DNS entries of k8s Services
 
-A situation where you may need to use it, would be if you want to have `example.com` go to `mysvc1.namespace1.svc` and `sub.example.com` go to `mysvc2.namespace2.svc` for reasons associated with CORS or similar.
+If you don't need to run test with a specific domain name, you could use the DNS entry of a Kubernetes Service instead. For example, if an ACME client is running in a pod targeted by the Kubernetes service called `client-svc` in the namespace `client-namespace`, then you could use `client-svc` or `client-svc.client-namespace` domain names.
 
-### /etc/hosts or Pod.spec.hostAlias
+A big upside of this approach is that any pod in Kubernetes will be able to find its to the actual web-server using the domain name, and not only those like Pebble using the configurable DNS server.
 
-If you have a local Kubernetes cluster running on your computer or in a VM and can communicate with the Kubernetes services through exposed nodePorts, then request towards them will go to `localhost`. You can add an entry in `/etc/hosts` to workaround this though.
+### /etc/hosts and Pod's spec.hostAlias
+If you have a local Kubernetes cluster running on your computer or VM and have exposed Kubernetes services through nodePorts, then request you make from the computer or VM will be towards `localhost`. But TLS certificates are valid for certain domain names, and the certificates acquired by the ACME client won't be valid for `localhost`.
 
-Adding this to `/etc/hosts` will make `mysvc.mynamespace` and other variants resolve to `127.0.0.1` (localhost).
+There is a workaround. By adding the lines below to `/etc/hosts`, you will make `mysvc.mynamespace` and other variants resolve to `127.0.0.1` (localhost).
 
 ```
 127.0.0.1 mysvc
@@ -267,38 +229,27 @@ Adding this to `/etc/hosts` will make `mysvc.mynamespace` and other variants res
 127.0.0.1 mysvc.mynamespace.svc.cluster.local
 ```
 
-It is also possible to manipulate a Kubernetes Pod's `/etc/hosts` file, but it should be done through the [`spec.hostAlias` configuration](https://kubernetes.io/docs/concepts/services-networking/add-entries-to-pod-etc-hosts-with-host-aliases/) to not interfere with `kubelet`.
-
-And, it is also possible to [configure /etc/hosts on TravisCI](https://docs.travis-ci.com/user/hosts/) and presumably many other CI systems.
-
-```yaml
-# travis.yml
-addons:
-  hosts:
-    - mysvc.mynamespace
-```
+It is also possible to configure `/etc/hosts` in a CI systems like [TravisCI](https://docs.travis-ci.com/user/hosts/) or in a Kubernetes Pod through the [`spec.hostAlias` configuration](https://kubernetes.io/docs/concepts/services-networking/add-entries-to-pod-etc-hosts-with-host-aliases/).
 
 ### /etc/resolve.conf or Pod.spec.dnsConfig
-`/etc/resolve.conf` can be configured to make use of a specific DNS server for various domains and its subdomains. Kubernetes also allows this to be configured through the [`spec.dnsConfig` configuration](https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/#pod-s-dns-config).
+`/etc/resolve.conf` can be configured to make use of a specific DNS server for various domains and its subdomains. Kubernetes Pods can also be configured through the [`spec.dnsConfig` configuration](https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/#pod-s-dns-config).
 
 ### Service.spec.externalName
-A Kubernetes Service can provide CNAMEs for its own name. For example, a Kubernetes Service named `dogs` with the [`spec.externalName` configuration](https://kubernetes.io/docs/concepts/services-networking/service/#externalname) set to `dogs.info` would make `dogs`, `dogs.mynamespace`, `dogs.mynamespace.svc` etc get a CNAME entry for `dogs.info`.
+A Kubernetes Service can be used to get a CNAMEs record associated with its own DNS name. For example, a Kubernetes Service named `dogs` with the [`spec.externalName` configuration](https://kubernetes.io/docs/concepts/services-networking/service/#externalname) set to `dogs.info` would make `dogs`, `dogs.mynamespace`, `dogs.mynamespace.svc`, and `dogs.mynamespace.svc.cluster.local` get a CNAME entry for `dogs.info`.
 
 
 
 ## Local development
 
 ### Prerequisites
-
 - [docker](https://docs.docker.com/get-docker/)
 - [k3d](https://github.com/rancher/k3d)
 - [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/)
 - [helm](https://helm.sh/docs/intro/install/)
 
 ### Setup
-
 ```shell
-# clone the repo
+# clone the git repo
 git clone https://github.com/jupyterhub/pebble-helm-chart.git
 cd pebble-helm-chart
 ```
@@ -315,7 +266,6 @@ helm upgrade pebble helm-chart/ --install --cleanup-on-fail --set challtestsrv.e
 ```
 
 ### Test
-
 ```shell
 # run a basic health check
 helm test pebble
@@ -328,3 +278,5 @@ kubectl logs pebble-test -c dns
 
 
 ## Release
+
+TODO

@@ -1,3 +1,6 @@
-This Helm chart is meant to be installed in the same namespace as another Helm
-chart that relies on an ACME server, and if you see this, perhaps you have
-installed it by itself in its own namespace? That isn't how its meant to be.
+TODO: WRITE NOTES.txt
+
+- the ACME server URL should be rendered
+- the ACME server management url for /roots/0 should be rendered
+
+- the configmap and how to mount it
