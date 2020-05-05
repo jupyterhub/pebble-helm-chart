@@ -28,7 +28,7 @@ fi
 ##
 setup_kubectl () {
     echo "setup kubectl ${KUBE_VERSION}"
-    curl -LO https://storage.googleapis.com/kubernetes-release/release/v${KUBE_VERSION}/bin/darwin/amd64/kubectl
+    curl -LO https://storage.googleapis.com/kubernetes-release/release/v${KUBE_VERSION}/bin/linux/amd64/kubectl
     chmod +x ./kubectl
     sudo mv ./kubectl /usr/local/bin/kubectl
 }
@@ -42,9 +42,3 @@ setup_k3d () {
     echo "setup k3d ${K3D_VERSION}"
     curl -s https://raw.githubusercontent.com/rancher/k3d/master/install.sh | TAG=v${K3D_VERSION} bash
 }
-
-if [ "${1:-}" = "--setup" ]; then
-    setup_kubectl
-    setup_helm
-    setup_k3d
-fi

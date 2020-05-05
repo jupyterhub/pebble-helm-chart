@@ -2,6 +2,8 @@ dist: bionic
 language: python
 python: [3.8]
 services: [docker]
+git:
+  depth: false
 
 stages:
   - name: test
@@ -9,9 +11,7 @@ stages:
     if: tag IS present # OR ( branch IN (master) AND type IN (push) )
 
 install:
-  - set -e
   - . ci/common
-  - pip install chartpress
 
 jobs:
   include:
@@ -22,12 +22,15 @@ jobs:
         - setup_k3d
         - k3d create --wait 60 --publish 8443:32443 --publish 8080:32080 --publish 8053:32053/udp --publish 8053:32053/tcp --publish 8081:32081
         - export KUBECONFIG="$(k3d get-kubeconfig --name='k3s-default')"
-        - helm upgrade pebble helm-chart/ --install --cleanup-on-fail --values ci/ci-values.yaml
+        - helm install pebble ./helm-chart --wait --timeout 60s --values ci/ci-values.yaml
         - helm test pebble
+      after_failure:
+        - kubectl get all
         - kubectl logs pebble-test -c acme-mgmt
         - kubectl logs pebble-test -c dns-mgmt
         - kubectl logs pebble-test -c dns
     - stage: publish
       script:
+        - pip install chartpress
         - setup_helm
         - ./ci/publish
