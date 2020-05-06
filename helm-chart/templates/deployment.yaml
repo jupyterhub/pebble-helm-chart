@@ -35,6 +35,8 @@ spec:
             # key.pem into it.
             - name: pebble-temp-tls-leaf
               mountPath: /output/localhost
+          # TODO: avoid "open localhost/key.pem: file exists" as happen if the
+          # container is restarting.
           command: [
             "minica",
             "-ca-cert", "/input/root-cert.pem",
