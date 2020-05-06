@@ -73,6 +73,10 @@ spec:
           env:
             {{- . | toYaml | nindent 12 }}
           {{- end }}
+          readinessProbe:
+            tcpSocket:
+              port: acme
+            periodSeconds: 1
 
         {{- if .Values.challtestsrv.enabled }}
         # A DNS server that can we make Pebble rely on. It's entries can be
@@ -106,13 +110,21 @@ spec:
           env:
             {{- . | toYaml | nindent 12 }}
           {{- end }}
+          readinessProbe:
+            tcpSocket:
+              port: dns-tcp
+            periodSeconds: 1
         
         {{- with .Values.challtestsrv.initPostRequests }}
         - name: challtestsrv-initializer
           image: busybox:1.31
           command: [ "sh", "-c" ]
           args:
-            - {{ range . }}wget --post-data {{ .data | toJson | squote }} localhost:8081/{{ .path }} && {{ end }} sleep infinity
+            - {{ range . }}wget --post-data {{ .data | toJson | squote }} localhost:8081/{{ .path }} && {{ end }} touch /signals/ready && sleep infinity
+          readinessProbe:
+            exec:
+              command: ["cat", "/signals/ready"]
+            periodSeconds: 1
         {{- end }}
         {{- end }}
 {{- end }}
