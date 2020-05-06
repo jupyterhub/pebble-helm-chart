@@ -25,7 +25,7 @@ jobs:
         - helm install pebble ./helm-chart --wait --timeout 60s --values ci/ci-values.yaml
         - helm test pebble
       after_failure:
-        - kubectl get all
+        - kubectl get all --all-namespaces
         - kubectl logs pebble-test -c acme-mgmt
         - kubectl logs pebble-test -c dns-mgmt
         - kubectl logs pebble-test -c dns

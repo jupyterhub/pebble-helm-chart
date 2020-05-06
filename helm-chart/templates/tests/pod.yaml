@@ -1,3 +1,9 @@
+{{- /*
+To avoid needing to wait for a slow startup of coredns, we use the IP addresses
+instead. The $pebble_svc_host will render to $(PEBBLE_SERVICE_HOST) which in
+turn will expand by kubelet to the Kubernetes service IP.
+*/ -}}
+{{- $pebble_svc_host := printf "$(%s_SERVICE_HOST)" (include "pebble.fullname" .) | upper | replace "-" "_" -}}
 apiVersion: v1
 kind: Pod
 metadata:
@@ -12,18 +18,18 @@ spec:
       image: curlimages/curl:7.70.0
       command: ["sh", "-c"]
       args:
-        - curl -vfk https://{{ include "pebble.fullname" . }}:8080/roots/0
+        - curl -vfk https://{{ $pebble_svc_host }}:8080/roots/0
     {{- if .Values.challtestsrv.enabled }}
     - name: dns-mgmt
       image: curlimages/curl:7.70.0
       command: ["sh", "-c"]
       args:
-        - curl -vf -X POST --data '{"host":"my-mocked-domain.name", "target":"my-acme-client.my-namespace"}' http://{{ include "pebble.fullname" . }}:8081/set-cname
+        - curl -vf --data '{"host":"my-mocked-domain.name", "target":"my-acme-client.my-namespace"}' http://{{ $pebble_svc_host }}:8081/set-cname
     - name: dns
       image: curlimages/curl:7.70.0
       command: ["sh", "-c"]
       args:
-        - nslookup -type=CNAME -port=8053 my-mocked-domain.name pebble | grep my-acme-client.my-namespace
+        - nslookup -type=CNAME -port=8053 my-mocked-domain.name {{ $pebble_svc_host }} | grep my-acme-client.my-namespace
     {{- end }}
   containers:
     - name: completed
