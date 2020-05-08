@@ -286,4 +286,11 @@ kubectl logs pebble-test -c dns
 
 ## Release
 
-TODO
+No changelog or similar yet.
+
+Making a release is as easy as pushing a tagged commit on the master branch.
+
+```
+git tag -a x.y.z -m x.y.z
+git push --follow-tags
+```
