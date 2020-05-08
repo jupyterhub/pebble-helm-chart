@@ -1,6 +1,6 @@
 apiVersion: v2
 name: pebble
-version: 0.1.0
+version: 0.0.1-set.by.chartpress
 ## appVersion should be updated along with pebble releases
 ## ref: https://github.com/letsencrypt/pebble/releases
 ##

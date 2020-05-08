@@ -20,5 +20,5 @@ travis encrypt-file ci/publish-id_ed25519
 
 ```shell
 # this command was provided from the earlier steps output
-openssl aes-256-cbc -K $encrypted_dae848772642_key -iv $encrypted_dae848772642_iv -in publish-id_ed25519.enc -out publish-id_ed25519 -d
+openssl aes-256-cbc -K $encrypted_dae848772642_key -iv $encrypted_dae848772642_iv -in ci/publish-id_ed25519.enc -out ci/publish-id_ed25519 -d
 ```

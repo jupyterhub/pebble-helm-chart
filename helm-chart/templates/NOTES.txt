@@ -1,6 +1,41 @@
-TODO: WRITE NOTES.txt
+Pebble's ACME server is available at:
+- https://{{ include "pebble.fullname" . }}.{{ .Release.Namespace }}:8443/dir
 
-- the ACME server URL should be rendered
-- the ACME server management url for /roots/0 should be rendered
+Pebble's ACME server will generate leaf certificates to
+ACME clients, and sign them with an insecure root cert
+available at:
+- https://{{ include "pebble.fullname" . }}.{{ .Release.Namespace }}:8080/roots/0
 
-- the configmap and how to mount it
+Communication with Pebble's HTTPS endpoints above requires
+accepting a root certificate in configmap/{{ include "pebble.fullname" . }}:
+- kubectl get configmap/{{ include "pebble.fullname" . }} --output jsonpath='{index .data "root-cert.pem"}'
+
+{{- if not .Values.challtestsrv.enabled }}
+
+You can make Pebble rely on a configurable DNS
+server like this:
+
+challtestsrv:
+  enabled: true
+{{- else }}
+
+Pebble's ACME server is configured to rely on the
+configurable DNS server at:
+- {{ include "pebble.fullname" . }}.{{ .Release.Namespace }}:8053
+
+The DNS server can be configured through a REST API
+available at:
+- http://{{ include "pebble.fullname" . }}.{{ .Release.Namespace }}:8081
+
+{{- if not .Values.challtestsrv.initPostRequests }}
+
+You can configure requests to be sent on startup like this:
+
+challtestsrv:
+  initPostRequests:
+    - path: set-cname
+      data:
+        host: mydomain.name
+        target: my-acme-client.my-namespace
+{{- end }}
+{{- end }}

@@ -37,15 +37,6 @@ install:
 env:
   - K3S_VERSION=v1.17.4+k3s1 HELM_VERSION=v3.2.0
 
-after_success:
-  - kubectl get all --all-namespaces
-
-after_failure:
-  - kubectl get all --all-namespaces
-  - kubectl logs pebble-test -c acme-mgmt
-  - kubectl logs pebble-test -c dns-mgmt
-  - kubectl logs pebble-test -c dns
-
 jobs:
   include:
     - stage: test
@@ -55,6 +46,13 @@ jobs:
         - setup_k3s
         - helm install pebble ./helm-chart --wait --timeout 60s --values ci/ci-values.yaml
         - helm test pebble
+      after_success:
+        - kubectl get all --all-namespaces
+      after_failure:
+        - kubectl get all --all-namespaces
+        - kubectl logs pebble-test -c acme-mgmt
+        - kubectl logs pebble-test -c dns-mgmt
+        - kubectl logs pebble-test -c dns
     - stage: publish
       script:
         - pip install chartpress
