@@ -44,7 +44,7 @@ jobs:
         - setup_kubectl
         - setup_helm
         - setup_k3s
-        - helm install pebble ./helm-chart --wait --timeout 60s --values ci/ci-values.yaml
+        - helm install pebble ./pebble --wait --timeout 60s --values ci/ci-values.yaml
         - helm test pebble
       after_success:
         - kubectl get all --all-namespaces
