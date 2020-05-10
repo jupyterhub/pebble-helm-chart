@@ -29,7 +29,7 @@ In the commonly used [HTTP-01 ACME challenge](https://letsencrypt.org/docs/chall
 ```shell
 helm repo add jupyterhub https://jupyterhub.github.io/helm-chart/
 helm repo update
-helm upgrade install jupyterhub/pebble
+helm upgrade pebble jupyterhub/pebble --install
 ```
 
 ### Sub-chart installation
@@ -269,7 +269,7 @@ export KUBECONFIG="$(k3d get-kubeconfig --name='k3s-default')"
 
 ```shell
 # install pebble
-helm upgrade pebble ./pebble --install --cleanup-on-fail --set challtestsrv.enabled=true
+helm upgrade pebble ./pebble --install --set challtestsrv.enabled=true
 ```
 
 ### Test

@@ -122,10 +122,10 @@ spec:
           image: busybox:1.31
           command: [ "sh", "-c" ]
           args:
-            - {{ range . }}wget --post-data {{ .data | toJson | squote }} localhost:8081/{{ .path }} && {{ end }} touch /signals/ready && sleep infinity
+            - {{ range . }}wget --post-data {{ .data | toJson | squote }} localhost:8081/{{ .path }} && {{ end }} touch /tmp/signal-ready && sleep infinity
           readinessProbe:
             exec:
-              command: ["cat", "/signals/ready"]
+              command: ["cat", "/tmp/signal-ready"]
             periodSeconds: 1
         {{- end }}
         {{- end }}
