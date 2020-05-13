@@ -12,12 +12,6 @@ stages:
 stage: test
 install:
   - |-
-      setup_kubectl () {
-          echo "setup kubectl ${K3S_VERSION%+*}"
-          curl -LO https://storage.googleapis.com/kubernetes-release/release/${K3S_VERSION%+*}/bin/linux/amd64/kubectl
-          chmod +x ./kubectl
-          sudo mv ./kubectl /usr/local/bin/kubectl
-      }
       setup_helm () {
           echo "setup helm ${HELM_VERSION}"
           curl -sf https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | DESIRED_VERSION=${HELM_VERSION} bash
@@ -41,9 +35,8 @@ jobs:
   include:
     - stage: test
       script:
-        - setup_kubectl
-        - setup_helm
         - setup_k3s
+        - setup_helm
         - helm install pebble ./pebble --wait --timeout 60s --values ci/ci-values.yaml
         - helm test pebble
       after_success:

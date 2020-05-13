@@ -1,5 +1,5 @@
 Pebble's ACME server is available at:
-- https://{{ include "pebble.fullname" . }}.{{ .Release.Namespace }}:8443/dir
+- https://{{ include "pebble.fullname" . }}.{{ .Release.Namespace }}/dir
 
 Pebble's ACME server will generate leaf certificates to
 ACME clients, and sign them with an insecure root cert
@@ -21,7 +21,7 @@ challtestsrv:
 
 Pebble's ACME server is configured to rely on the
 configurable DNS server at:
-- {{ include "pebble.fullname" . }}.{{ .Release.Namespace }}:8053
+- {{ include "pebble.fullname" . }}.{{ .Release.Namespace }}
 
 The DNS server can be configured through a REST API
 available at:

@@ -29,7 +29,7 @@ spec:
       image: curlimages/curl:7.70.0
       command: ["sh", "-c"]
       args:
-        - nslookup -type=CNAME -port=8053 my-mocked-domain.name {{ $pebble_svc_host }} | grep my-acme-client.my-namespace
+        - nslookup -type=CNAME my-mocked-domain.name {{ $pebble_svc_host }} | grep my-acme-client.my-namespace
     {{- end }}
   containers:
     - name: completed

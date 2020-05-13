@@ -35,15 +35,18 @@ spec:
             # key.pem into it.
             - name: pebble-temp-tls-leaf
               mountPath: /output/localhost
-          # TODO: avoid "open localhost/key.pem: file exists" as happen if the
-          # container is restarting.
-          command: [
-            "minica",
-            "-ca-cert", "/input/root-cert.pem",
-            "-ca-key", "/input/root-key.pem",
-            "-domains", {{ include "pebble.domains" . | quote }},
-            "-ip-addresses", "127.0.0.1",
-          ]
+          command:
+            # Avoid "open localhost/key.pem: file exists" as happen if the
+            # container restarts for some reason.
+            - sh
+            - -c
+            - >
+                [ -e localhost/key.pem ] || exec
+                minica
+                -ca-cert /input/root-cert.pem
+                -ca-key /input/root-key.pem
+                -domains {{ include "pebble.domains" . | quote }}
+                -ip-addresses 127.0.0.1
 
       containers:
         # Pebble is the acme server, but also expose a REST API on the
@@ -71,14 +74,56 @@ spec:
               containerPort: 8443
             - name: acme-mgmt
               containerPort: 8080
-          {{- with .Values.pebble.env }}
           env:
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: "metadata.namespace"
+            {{- with .Values.pebble.env }}
             {{- . | toYaml | nindent 12 }}
-          {{- end }}
+            {{- end }}
           readinessProbe:
-            tcpSocket:
-              port: acme
+            # The goal of this readiness probe are:
+            # - to not clutter logs
+            # - react quickly (<0.2s) on ready
+            # - react decently (<2s) on not ready
+            timeoutSeconds: 60
             periodSeconds: 1
+            successThreshold: 1
+            failureThreshold: 1
+            exec:
+              command:
+                - sh
+                - -c
+                - |
+                    if [ -e /ready-signal ]
+                    then
+                        n=0
+                        while [ $n -lt 25 ]
+                        do
+                            if [ "$(netstat -tl | grep 8443)" = "" ]
+                            then
+                                rm /ready-signal
+                                exit 1
+                            fi
+                            sleep 2s
+                            n=$((n+1))
+                        done
+                        exit 0
+                    else
+                        n=0
+                        while [ $n -lt 250 ]
+                        do
+                            if [ "$(netstat -tl | grep 8443)" != "" ]
+                            then
+                                touch /ready-signal
+                                exit 0
+                            fi
+                            sleep 0.2s
+                            n=$((n+1))
+                        done
+                        exit 1
+                    fi
 
         {{- if .Values.challtestsrv.enabled }}
         # A DNS server that can we make Pebble rely on. It's entries can be
@@ -108,14 +153,18 @@ spec:
               containerPort: 8053
             - name: dns-mgmt
               containerPort: 8081
-          {{- with .Values.challtestsrv.env }}
           env:
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: "metadata.namespace"
+            {{- with .Values.challtestsrv.env }}
             {{- . | toYaml | nindent 12 }}
-          {{- end }}
+            {{- end }}
           readinessProbe:
             tcpSocket:
               port: dns-tcp
-            periodSeconds: 1
+            periodSeconds: 2
         
         {{- with .Values.challtestsrv.initPostRequests }}
         - name: challtestsrv-initializer
@@ -123,10 +172,18 @@ spec:
           command: [ "sh", "-c" ]
           args:
             - {{ range . }}wget --post-data {{ .data | toJson | squote }} localhost:8081/{{ .path }} && {{ end }} touch /tmp/signal-ready && sleep infinity
+          env:
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: "metadata.namespace"
+            {{- with .Values.challtestsrv.env }}
+            {{- . | toYaml | nindent 12 }}
+            {{- end }}
           readinessProbe:
             exec:
               command: ["cat", "/tmp/signal-ready"]
-            periodSeconds: 1
+            periodSeconds: 2
         {{- end }}
         {{- end }}
 {{- end }}
