@@ -11,7 +11,7 @@
 
 [Pebble](https://github.com/letsencrypt/pebble) is an [ACME](https://letsencrypt.org/docs/glossary/#def-ACME) server like [Let's Encrypt](https://letsencrypt.org/). ACME servers can provide [TLS](https://letsencrypt.org/docs/glossary/#def-TLS) [certificates](https://letsencrypt.org/docs/glossary/#def-certificate) for HTTP over TLS ([HTTPS](https://en.wikipedia.org/wiki/HTTPS)) to [ACME clients](https://letsencrypt.org/docs/client-options/) that are able to prove control over a domain name through an [ACME challenge](https://letsencrypt.org/docs/challenge-types/).
 
-This [Helm chart](https://helm.sh/docs/topics/charts/) makes it easy to install Pebble in a [Kubernetes cluster](https://kubernetes.io/) using [Helm](https://helm.sh/) along with an optional [utility server](https://github.com/letsencrypt/pebble/tree/master/cmd/pebble-challtestsrv) that can act as a configurable DNS server to influence Pebble DNS lookups.
+This [Helm chart](https://helm.sh/docs/topics/charts/) makes it easy to install Pebble in a [Kubernetes cluster](https://kubernetes.io/) using [Helm](https://helm.sh/). While we recommend using Kubernetes internal DNS functionalities, this Helm chart can also deploy [pebble-challtestsrv](https://github.com/letsencrypt/pebble/tree/master/cmd/pebble-challtestsrv) that for example can act as a configurable DNS server.
 
 ## Motivation
 
@@ -29,7 +29,7 @@ In the commonly used [HTTP-01 ACME challenge](https://letsencrypt.org/docs/chall
 ```shell
 helm repo add jupyterhub https://jupyterhub.github.io/helm-chart/
 helm repo update
-helm upgrade pebble jupyterhub/pebble --install
+helm install pebble jupyterhub/pebble
 ```
 
 ### Sub-chart installation
@@ -62,6 +62,7 @@ Helm charts render templates into Kubernetes yaml files using configurable value
 To configure the Pebble Helm chart, create a `my-values.yaml` file to pass with `--values`. If you have installed it as a sub-chart, you should [nest the configuration](https://helm.sh/docs/chart_template_guide/subcharts_and_globals/#overriding-values-from-a-parent-chart).
 
 ### Pebble configuration
+
 #### Mischievous behavior?
 Pebble is developed to test ACME clients and ensure they are robust, so it can intentionally act mischievous.
 
@@ -87,43 +88,6 @@ pebble:
       httpPort: 80 # this is the port where outgoing HTTP-01 challenges go
       tlsPort: 443 # this is the port where outgoing TLS-ALPN-01 challenges go
 ```
-
-### The configurable DNS Server
-Pebble can optionally be deployed with a configurable DNS server next to it that Pebble then will use for DNS lookups. This DNS server can for example be configured to resolve all domain lookups to a specific IP or have CNAME entries to point a domain to another domains, such as directing `example.local` to `mysvc.mynamespace`.
-
-#### Enabling the configurable DNS Server
-```yaml
-challtestsrv:
-  enabled: true
-```
-
-#### Default IP: Any domain -> Specified IP
-You can make all DNS lookups default to a specific IP. This IP can either be set explicitly like `10.0.13.37`, or you can set it to `$(MYSVC_SERVICE_HOST)` which relies on [kublet](https://kubernetes.io/docs/concepts/overview/components/#kubelet) to add and expand the [`_SERVICE_HOST` suffixed environment variables](https://kubernetes.io/docs/concepts/services-networking/service/#environment-variables) for Kubernetes Services in the same namespace.
-
-If `_SERVICE_HOST` environment variables are used, the Service must exist before the Pebble pod is created.
-
-```yaml
-challtestsrv:
-  command:
-    defaultIPv4: 10.0.13.37
-    # defaultIPv4: $(MYSVC_SERVICE_HOST)
-```
-
-#### CNAME (and other records): Any domain -> Any domain
-To initialize the DNS server with records, we can use its [management REST API](https://github.com/letsencrypt/pebble/tree/master/cmd/pebble-challtestsrv) and send POST requests to it when it starts up.
-
-Here is an example to add a CNAME record pointing to a [Kubernetes Service's domain name](https://kubernetes.io/docs/concepts/services-networking/service/#dns).
-
-```yaml
-challtestsrv:
-  initPostRequests:
-    - path: set-cname
-      data:
-        host: example.local
-        target: my-acme-client.my-namespace
-```
-
-
 
 ## ACME Client configuration
 
@@ -216,33 +180,74 @@ containers:
 
 
 
-## Related tips and tricks
+## DNS configuration
 
-### DNS entries of k8s Services
+Pebble as an ACME server needs to resolve domain names to where the ACME client can receive traffic. This can be done in various ways, and it is not apparent what makes the most sense for your setup. We recommend the basic or intermediary options below.
 
-If you don't need to run test with a specific domain name, you could use the DNS entry of a Kubernetes Service instead. For example, if an ACME client is running in a pod targeted by the Kubernetes service called `client-svc` in the namespace `client-namespace`, then you could use `client-svc` or `client-svc.client-namespace` domain names.
+### Basic
 
-A big upside of this approach is that any pod in Kubernetes will be able to find its to the actual web-server using the domain name, and not only those like Pebble using the configurable DNS server.
+If you don't need your ACME client to have a specific domain name (`mydomain.test`), you could test against the domain name of the ACME client's Kubernetes Service (`mysvc.mynamespace`). For example, if an ACME client is running in a pod targeted by the Kubernetes service called `client-svc` in the namespace `client-namespace`, then you could use `client-svc` and/or `client-svc.client-namespace` as domain names.
 
-### /etc/hosts and Pod's spec.hostAlias
-If you have a local Kubernetes cluster running on your computer or VM and have exposed Kubernetes services through nodePorts, then request you make from the computer or VM will be towards `localhost`. But TLS certificates are valid for certain domain names, and the certificates acquired by the ACME client won't be valid for `localhost`.
+An upside of this approach is that any pod in Kubernetes will be able to find its to the actual web-server using the domain name, and not only those like Pebble using the configurable DNS server.
 
-There is a workaround. By adding the lines below to `/etc/hosts`, you will make `mysvc.mynamespace` and other variants resolve to `127.0.0.1` (localhost).
+A downside of this approach is that requests must go to this specific domain name as it is the only reference to the Kubernetes service. This can be resolved in two ways.
+
+### Intermediary - Configuring the Kubernetes cluster's DNS server
+
+You can configure the Kubernetes wide DNS server to point a set of domain names to this Kubernetes Service's domain name with CNAME records. While [kube-dns](https://github.com/kubernetes/dns) was common before, [CoreDNS](https://coredns.io/) is a common DNS server today.
+
+CoreDNS is configured through a [Corefile](https://coredns.io/manual/toc/#configuration), which could very well be mounted through a configmap called `coredns` with a key called `Corefile` in the `kube-system` namespace. If that is the case, we can simply modify this ConfigMap and wait a while and then we will see the change.
+
+Here is a Corefile part of the `corefile` configmap in `kube-system` that I got as part of starting a [k3s](https://k3s.io/) Kubernetes cluster.
 
 ```
-127.0.0.1 mysvc
-127.0.0.1 mysvc.mynamespace
-127.0.0.1 mysvc.mynamespace.svc
-127.0.0.1 mysvc.mynamespace.svc.cluster.local
+.:53 {
+    errors
+    health
+    ready
+    kubernetes cluster.local in-addr.arpa ip6.arpa {
+      pods insecure
+      upstream
+      fallthrough in-addr.arpa ip6.arpa
+    }
+    hosts /etc/coredns/NodeHosts {
+      reload 1s
+      fallthrough
+    }
+    prometheus :9153
+    forward . /etc/resolv.conf
+    cache 30
+    loop
+    reload
+    loadbalance
+}
 ```
 
-It is also possible to configure `/etc/hosts` in a CI systems like [TravisCI](https://docs.travis-ci.com/user/hosts/) or in a Kubernetes Pod through the [`spec.hostAlias` configuration](https://kubernetes.io/docs/concepts/services-networking/add-entries-to-pod-etc-hosts-with-host-aliases/).
+By modifying this Corefile to have the following section below the line with "ready", we will make all lookups of `any.thing.test` resolve to the IP of `client-svc.client-namespace.svc.cluster.local`.
 
-### /etc/resolve.conf or Pod.spec.dnsConfig
-`/etc/resolve.conf` can be configured to make use of a specific DNS server for various domains and its subdomains. Kubernetes Pods can also be configured through the [`spec.dnsConfig` configuration](https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/#pod-s-dns-config).
+```
+    template ANY ANY test {
+      match "^([^\.]+\.)*test\.$"
+      answer "{{ .Name }} 60 IN CNAME client-svc.client-namespace.svc.cluster.local"
+      upstream
+    }
+```
 
-### Service.spec.externalName
-A Kubernetes Service can be used to get a CNAMEs record associated with its own DNS name. For example, a Kubernetes Service named `dogs` with the [`spec.externalName` configuration](https://kubernetes.io/docs/concepts/services-networking/service/#externalname) set to `dogs.info` would make `dogs`, `dogs.mynamespace`, `dogs.mynamespace.svc`, and `dogs.mynamespace.svc.cluster.local` get a CNAME entry for `dogs.info`.
+It is possible to do this modification with `kubectl edit configmap -n kube-system corefile` but also by a command which is suitable in a script for CI environments.
+
+```
+kubectl get configmap -n kube-system coredns -o jsonpath='{.data.Corefile}' \
+| sed '/ready$/a \
+    template ANY ANY test {\
+      match "^([^\.]+\.)*test\.$"\
+      answer "{{ .Name }} 60 IN CNAME proxy-public.default.svc.cluster.local"\
+      upstream\
+    }' \
+> /tmp/Corefile
+
+kubectl create configmap -n kube-system coredns --from-file Corefile=/tmp/Corefile -o yaml --dry-run=client \
+| kubectl apply -f -
+```
 
 
 

@@ -8,6 +8,9 @@ pebble:
     tag: "" # default is the chart's appVersion, this is an override
     pullPolicy: ""
 
+  command:
+    dnsserver: "" # ":8053"
+
   # config ref: https://github.com/letsencrypt/pebble/blob/52b92744eaad895ac25b19dae429c0bdd134b764/cmd/pebble/main.go#L17
   config:
     pebble:

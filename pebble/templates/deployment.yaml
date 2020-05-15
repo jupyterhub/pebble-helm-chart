@@ -62,13 +62,14 @@ spec:
             - name: pebble-temp-tls-leaf
               mountPath: /etc/pebble/temp-tls-leaf
           # command: [ "cat", "/etc/pebble/pebble-config.json" ]
-          command: [
-            "pebble",
-            "-config", "/etc/pebble/pebble-config.json",
-            {{- if .Values.challtestsrv.enabled }}
-            "-dnsserver", ":8053",
+          command:
+            - pebble
+            - -config
+            - /etc/pebble/pebble-config.json
+            {{- with .Values.pebble.command.dnsserver }}
+            - -dnsserver
+            - {{ . | quote}}
             {{- end }}
-          ]
           ports:
             - name: acme
               containerPort: 8443
@@ -166,12 +167,12 @@ spec:
               port: dns-tcp
             periodSeconds: 2
         
-        {{- with .Values.challtestsrv.initPostRequests }}
+        {{- if .Values.challtestsrv.initPostRequests }}
         - name: challtestsrv-initializer
           image: busybox:1.31
           command: [ "sh", "-c" ]
           args:
-            - {{ range . }}wget --post-data {{ .data | toJson | squote }} localhost:8081/{{ .path }} && {{ end }} touch /tmp/signal-ready && sleep infinity
+            - {{ range .Values.challtestsrv.initPostRequests }}wget --post-data {{ .data | toJson | squote }} localhost:8081/{{ .path }} && {{ end }} touch /tmp/signal-ready && sleep infinity
           env:
             - name: POD_NAMESPACE
               valueFrom:

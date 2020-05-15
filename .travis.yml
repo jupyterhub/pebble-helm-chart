@@ -9,7 +9,6 @@ stages:
   - name: publish
     if: tag IS present # OR ( branch IN (master) AND type IN (push) )
 
-stage: test
 install:
   - |-
       setup_helm () {
@@ -22,14 +21,15 @@ install:
           curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION=${K3S_VERSION} sh -s - \
               --write-kubeconfig-mode=644 \
               --disable traefik \
-              --disable metrics-server
+              --disable metrics-server \
+              --disable local-storage
           export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
       }
 
-# https://github.com/helm/helm/releases
 # https://github.com/rancher/k3s/releases
+# https://github.com/helm/helm/releases
 env:
-  - K3S_VERSION=v1.17.4+k3s1 HELM_VERSION=v3.2.0
+  - K3S_VERSION=v1.18.2+k3s1 HELM_VERSION=v3.2.1
 
 jobs:
   include:
