@@ -14,6 +14,8 @@ spec:
     metadata:
       labels:
         {{- include "pebble.selectorLabels" . | nindent 8 }}
+      annotations:
+        checksum/configmap: {{ include "pebble.configmap" . | fromYaml | merge .Values.pebble.merge.configmap | toYaml | sha256sum }}
     spec:
       terminationGracePeriodSeconds: 1
 
@@ -54,21 +56,19 @@ spec:
         # requests etc.
         - name: pebble
           image: "{{ .Values.pebble.image.repository }}:{{ .Values.pebble.image.tag | default .Chart.AppVersion }}"
-          # image: busybox
           volumeMounts:
             - name: pebble-config-and-tls-root
               subPath: pebble-config.json
               mountPath: /etc/pebble/pebble-config.json
             - name: pebble-temp-tls-leaf
               mountPath: /etc/pebble/temp-tls-leaf
-          # command: [ "cat", "/etc/pebble/pebble-config.json" ]
           command:
             - pebble
             - -config
             - /etc/pebble/pebble-config.json
-            {{- with .Values.pebble.command.dnsserver }}
-            - -dnsserver
-            - {{ . | quote}}
+            {{- if .Values.coredns.enabled }}
+            - -dnsserver 
+            - {{ printf "$(%s_COREDNS_SERVICE_HOST):53" (include "pebble.fullname" .) | upper | replace "-" "_" }}
             {{- end }}
           ports:
             - name: acme
@@ -127,4 +127,4 @@ spec:
                     fi
 {{- end }}
 
-{{- include "pebble.deployment" . | fromYaml | merge .Values.merge.deployment | toYaml }}
+{{- include "pebble.deployment" . | fromYaml | merge .Values.pebble.merge.deployment | toYaml }}

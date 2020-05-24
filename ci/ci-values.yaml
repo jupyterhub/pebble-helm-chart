@@ -1,0 +1,5 @@
+coredns:
+  corefileSegment: |-
+    template ANY ANY test {
+      answer "{{ .Name }} 60 IN CNAME pebble.{$PEBBLE_NAMESPACE}.svc.cluster.local"
+    }

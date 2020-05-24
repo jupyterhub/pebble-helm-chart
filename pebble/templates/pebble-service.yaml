@@ -6,7 +6,7 @@ metadata:
   labels:
     {{- include "pebble.labels" . | nindent 4 }}
 spec:
-  {{- if .Values.service.enableNodePorts }}
+  {{- if or .Values.pebble.nodePort .Values.pebble.mgmtNodePort }}
   type: NodePort
   {{- end }}
   selector:
@@ -15,15 +15,15 @@ spec:
     - name: acme
       targetPort: acme
       port: 443
-      {{- if .Values.service.enableNodePorts }}
-      nodePort: {{ .Values.service.acmeNodePort }}
+      {{- with .Values.pebble.nodePort }}
+      nodePort: {{ . }}
       {{- end }}
     - name: acme-mgmt
       targetPort: acme-mgmt
       port: 8080
-      {{- if .Values.service.enableNodePorts }}
-      nodePort: {{ .Values.service.acmeMgmtNodePort }}
+      {{- with .Values.pebble.mgmtNodePort }}
+      nodePort: {{ . }}
       {{- end }}
 {{- end }}
 
-{{- include "pebble.service" . | fromYaml | merge .Values.merge.service | toYaml }}
+{{- include "pebble.service" . | fromYaml | merge .Values.pebble.merge.service | toYaml }}

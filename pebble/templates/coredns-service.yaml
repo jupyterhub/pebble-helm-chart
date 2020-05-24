@@ -6,7 +6,7 @@ metadata:
   labels:
     {{- include "pebble.labels" . | nindent 4 }}
 spec:
-  {{- if .Values.service.dnsNodePort }}
+  {{- if .Values.coredns.nodePort }}
   type: NodePort
   {{- end }}
   selector:
@@ -16,14 +16,14 @@ spec:
       targetPort: dns
       protocol: UDP
       port: 53
-      {{- with .Values.service.dnsNodePort }}
+      {{- with .Values.coredns.nodePort }}
       nodePort: {{ . }}
       {{- end }}
     - name: dns-tcp
       targetPort: dns-tcp
       protocol: TCP
       port: 53
-      {{- with .Values.service.dnsNodePort }}
+      {{- with .Values.coredns.nodePort }}
       nodePort: {{ . }}
       {{- end }}
 {{- end }}

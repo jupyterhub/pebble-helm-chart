@@ -31,4 +31,4 @@ data:
   {{- (.Files.Glob "files/root-key.pem").AsConfig | nindent 2 }}
 {{- end }}
 
-{{- include "pebble.configmap" . | fromYaml | merge .Values.merge.configmap | toYaml }}
+{{- include "pebble.configmap" . | fromYaml | merge .Values.pebble.merge.configmap | toYaml }}

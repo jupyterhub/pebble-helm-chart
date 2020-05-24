@@ -6,10 +6,6 @@ pebble:
     # repository ref: https://hub.docker.com/r/letsencrypt/pebble
     repository: letsencrypt/pebble
     tag: "" # default is the chart's appVersion, this is an override
-    pullPolicy: ""
-
-  command:
-    dnsserver: "" # ":8053"
 
   # config ref: https://github.com/letsencrypt/pebble/blob/52b92744eaad895ac25b19dae429c0bdd134b764/cmd/pebble/main.go#L17
   config:
@@ -25,7 +21,7 @@ pebble:
       externalAccountMACKeys: {}
 
   env:
-    # ref: https://github.com/letsencrypt/pebble#testing-at-full-speed
+    ## ref: https://github.com/letsencrypt/pebble#testing-at-full-speed
     - name: PEBBLE_VA_NOSLEEP
       value: "1"
     ## ref: https://github.com/letsencrypt/pebble#invalid-anti-replay-nonce-errors
@@ -38,45 +34,44 @@ pebble:
     #- name: PEBBLE_AUTHZREUSE
     #  value: "0"
 
-  resources:
-    limits:
-      cpu: 100m
-      memory: 128Mi
-    requests:
-      cpu: 50m
-      memory: 128Mi
+  nodePort: 32443
+  mgmtNodePort: 32080
 
-service:
-  enableNodePorts: true
-  acmeNodePort: 32443
-  acmeMgmtNodePort: 32080
+  ## merge lets you merge in annotations, tolerations, etc, into respective
+  ## resources.
+  merge:
+    deployment: {}
+    service: {}
+    configmap: {}
 
-# If you want to specify annotations, tolerations, etc, do it through this
-# escape hatch that will get merged into the respective resource that is part of
-# this Helm chart. It is problematic to try merge into an array, for example the
-# deployments containers being in a list.
-merge:
-  deployment: {}
-  service: {}
-  configmap: {}
 
+## coredns is an optional DNS server that can for example point anything.test
+## to your-acme-client.your-namespace.svc.cluster.local.
 coredns:
   enabled: true
+
   image:
     repository: coredns/coredns
     tag: 1.6.9
+
   ## corefileSegment allow you to inject logic into CoreDNS's configuration
   ## file, called a Corefile. The example below will resolve all lookups of
   ## the test domain to whatever the Kubernetes clusters normal DNS server
-  ## resolves mysvc.mynamespace.svc.cluster.local to, which could be where
-  ## you run your ACME client.
+  ## resolves mysvc.<pebbles-namespace>.svc.cluster.local to, which could be
+  ## where you run your ACME client.
   ##
   ## ref: https://coredns.io/manual/toc/#configuration
   ##
-  corefileSegment: |-
-    template ANY ANY test {
-      answer "{{ .Name }} 60 IN CNAME mysvc.mynamespace.svc.cluster.local"
-    }
+  corefileSegment: ""
+  # corefileSegment: |-
+  #   template ANY ANY test {
+  #     answer "{{ .Name }} 60 IN CNAME mysvc.{$PEBBLE_NAMESPACE}.svc.cluster.local"
+  #   }
+
+  nodePort: 32053
+
+  ## merge lets you merge in annotations, tolerations, etc, into respective
+  ## resources.
   merge:
     deployment: {}
     service: {}

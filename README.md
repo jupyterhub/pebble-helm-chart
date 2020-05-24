@@ -190,7 +190,7 @@ If you don't need your ACME client to have a specific domain name (`mydomain.tes
 
 An upside of this approach is that any pod in Kubernetes will be able to find its to the actual web-server using the domain name, and not only those like Pebble using the configurable DNS server.
 
-A downside of this approach is that requests must go to this specific domain name as it is the only reference to the Kubernetes service. This can be resolved in two ways.
+A downside of this approach is that requests must go to this specific domain name as it is the only reference to the Kubernetes service. This can be resolved
 
 ### Intermediary - Configuring the Kubernetes cluster's DNS server
 
@@ -227,9 +227,7 @@ By modifying this Corefile to have the following section below the line with "re
 
 ```
     template ANY ANY test {
-      match "^([^\.]+\.)*test\.$"
       answer "{{ .Name }} 60 IN CNAME client-svc.client-namespace.svc.cluster.local"
-      upstream
     }
 ```
 
@@ -239,9 +237,7 @@ It is possible to do this modification with `kubectl edit configmap -n kube-syst
 kubectl get configmap -n kube-system coredns -o jsonpath='{.data.Corefile}' \
 | sed '/ready$/a \
     template ANY ANY test {\
-      match "^([^\.]+\.)*test\.$"\
-      answer "{{ .Name }} 60 IN CNAME proxy-public.default.svc.cluster.local"\
-      upstream\
+      answer "{{ .Name }} 60 IN CNAME client-svc.client-namespace.svc.cluster.local"\
     }' \
 > /tmp/Corefile
 
@@ -268,13 +264,13 @@ cd pebble-helm-chart
 
 ```shell
 # setup a local k8s cluster
-k3d create --wait 60 --publish 8443:32443 --publish 8080:32080 --publish 8053:32053/udp --publish 8053:32053/tcp --publish 8081:32081
+k3d create --wait 60 --publish 8443:32443 --publish 8080:32080 --publish 8053:32053/udp --publish 8053:32053/tcp
 export KUBECONFIG="$(k3d get-kubeconfig --name='k3s-default')"
 ```
 
 ```shell
 # install pebble
-helm upgrade pebble ./pebble --install
+helm upgrade --install pebble ./pebble --cleanup-on-fail
 ```
 
 ### Test
@@ -282,7 +278,8 @@ helm upgrade pebble ./pebble --install
 # run a basic health check
 helm test pebble
 
-kubectl logs pebble-test -c acme-mgmt
+kubectl logs pebble-test --all-containers
+kubectl logs pebble-coredns-test --all-containers
 ```
 
 
