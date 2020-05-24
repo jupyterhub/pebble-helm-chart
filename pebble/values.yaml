@@ -97,3 +97,25 @@ merge:
   deployment: {}
   service: {}
   configmap: {}
+
+coredns:
+  enabled: true
+  image:
+    repository: coredns/coredns
+    tag: 1.6.9
+  ## corefileSegment allow you to inject logic into CoreDNS's configuration
+  ## file, called a Corefile. The example below will resolve all lookups of
+  ## the test domain to whatever the Kubernetes clusters normal DNS server
+  ## resolves mysvc.mynamespace.svc.cluster.local to, which could be where
+  ## you run your ACME client.
+  ##
+  ## ref: https://coredns.io/manual/toc/#configuration
+  ##
+  corefileSegment: |-
+    template ANY ANY test {
+      answer "{{ .Name }} 60 IN CNAME mysvc.mynamespace.svc.cluster.local"
+    }
+  merge:
+    deployment: {}
+    service: {}
+    configmap: {}

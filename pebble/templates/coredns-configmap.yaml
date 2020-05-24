@@ -1,0 +1,25 @@
+{{- define "pebble.coredns.configmap" -}}
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: {{ include "pebble.fullname" . }}
+  labels:
+    {{- include "pebble.labels" . | nindent 4 }}
+data:
+  Corefile: |
+    .:8053 {
+      errors
+      health
+      ready
+      {{- with .Values.coredns.corefileSegment }}
+      {{- . | nindent 6 }}
+      {{- end }}
+      forward . /etc/resolv.conf
+      cache 2
+      reload
+    }
+{{- end }}
+
+{{- if .Values.coredns.enabled -}}
+{{- include "pebble.coredns.configmap" . | fromYaml | merge .Values.coredns.merge.configmap | toYaml }}
+{{- end }}
