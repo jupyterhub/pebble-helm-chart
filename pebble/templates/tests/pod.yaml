@@ -19,18 +19,6 @@ spec:
       command: ["sh", "-c"]
       args:
         - curl -vfk https://{{ $pebble_svc_host }}:8080/roots/0
-    {{- if .Values.challtestsrv.enabled }}
-    - name: dns-mgmt
-      image: curlimages/curl:7.70.0
-      command: ["sh", "-c"]
-      args:
-        - curl -vf --data '{"host":"my-mocked-domain.name", "target":"my-acme-client.my-namespace"}' http://{{ $pebble_svc_host }}:8081/set-cname
-    - name: dns
-      image: curlimages/curl:7.70.0
-      command: ["sh", "-c"]
-      args:
-        - nslookup -type=CNAME my-mocked-domain.name {{ $pebble_svc_host }} | grep my-acme-client.my-namespace
-    {{- end }}
   containers:
     - name: completed
       image: curlimages/curl:7.70.0

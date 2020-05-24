@@ -44,8 +44,6 @@ jobs:
       after_failure:
         - kubectl get all --all-namespaces
         - kubectl logs pebble-test -c acme-mgmt
-        - kubectl logs pebble-test -c dns-mgmt
-        - kubectl logs pebble-test -c dns
     - stage: publish
       script:
         - pip install chartpress

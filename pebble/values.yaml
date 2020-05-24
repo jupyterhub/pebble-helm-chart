@@ -46,48 +46,10 @@ pebble:
       cpu: 50m
       memory: 128Mi
 
-
-# Used as a DNS server for Pebble's ACME server, and can through its REST API on
-# the management port dynamically update DNS records.
-challtestsrv:
-  enabled: false
-
-  image:
-    # repository ref: https://hub.docker.com/r/letsencrypt/pebble-challtestsrv
-    repository: letsencrypt/pebble-challtestsrv
-    tag: "" # default is the chart's appVersion, this is an override
-    pullPolicy: ""
-
-  command:
-    # NOTE: DNS lookups can be configured to default to an IP. To route to a
-    #       specific Kubernetes Service by default, you can use the environment
-    #       variables set by Kubernetes.
-    defaultIPv4: "" # "$(MYSVC_SERVICE_HOST)"
-    defaultIPv6: ""
-
-  # ref: https://github.com/letsencrypt/pebble/tree/master/cmd/pebble-challtestsrv#usage
-  initPostRequests: []
-    # - path: set-cname
-    #   data:
-    #     host: mydomain.name
-    #     target: my-acme-client.my-namespace
-
-  env: []
-
-  resources:
-    limits:
-      cpu: 100m
-      memory: 128Mi
-    requests:
-      cpu: 50m
-      memory: 128Mi
-
 service:
   enableNodePorts: true
   acmeNodePort: 32443
   acmeMgmtNodePort: 32080
-  dnsNodePort: 32053
-  dnsMgmtNodePort: 32081
 
 # If you want to specify annotations, tolerations, etc, do it through this
 # escape hatch that will get merged into the respective resource that is part of

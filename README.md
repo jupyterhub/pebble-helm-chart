@@ -11,7 +11,7 @@
 
 [Pebble](https://github.com/letsencrypt/pebble) is an [ACME](https://letsencrypt.org/docs/glossary/#def-ACME) server like [Let's Encrypt](https://letsencrypt.org/). ACME servers can provide [TLS](https://letsencrypt.org/docs/glossary/#def-TLS) [certificates](https://letsencrypt.org/docs/glossary/#def-certificate) for HTTP over TLS ([HTTPS](https://en.wikipedia.org/wiki/HTTPS)) to [ACME clients](https://letsencrypt.org/docs/client-options/) that are able to prove control over a domain name through an [ACME challenge](https://letsencrypt.org/docs/challenge-types/).
 
-This [Helm chart](https://helm.sh/docs/topics/charts/) makes it easy to install Pebble in a [Kubernetes cluster](https://kubernetes.io/) using [Helm](https://helm.sh/). While we recommend using Kubernetes internal DNS functionalities, this Helm chart can also deploy [pebble-challtestsrv](https://github.com/letsencrypt/pebble/tree/master/cmd/pebble-challtestsrv) that for example can act as a configurable DNS server.
+This [Helm chart](https://helm.sh/docs/topics/charts/) makes it easy to install Pebble in a [Kubernetes cluster](https://kubernetes.io/) using [Helm](https://helm.sh/).
 
 ## Motivation
 
@@ -274,7 +274,7 @@ export KUBECONFIG="$(k3d get-kubeconfig --name='k3s-default')"
 
 ```shell
 # install pebble
-helm upgrade pebble ./pebble --install --set challtestsrv.enabled=true
+helm upgrade pebble ./pebble --install
 ```
 
 ### Test
@@ -283,8 +283,6 @@ helm upgrade pebble ./pebble --install --set challtestsrv.enabled=true
 helm test pebble
 
 kubectl logs pebble-test -c acme-mgmt
-kubectl logs pebble-test -c dns-mgmt
-kubectl logs pebble-test -c dns
 ```
 
 
