@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/jupyterhub/pebble-helm-chart/blob/master/pebble/values.schema.json",
+
+  "definitions": {
+    "image": {
+      "type": "object",
+      "properties": {
+        "repository": { "type": "string" },
+        "tag":        { "type": "string" },
+        "pullPolicy": { "type": "string" }
+      },
+      "required": ["repository", "tag"]
+    },
+
+    "env": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name":  { "type": "string" },
+          "value":  { "type": "string" }
+        },
+        "required": ["name", "value"]
+      }
+    }
+
+  },
+
+  "type": "object",
+
+  "properties": {
+    "pebble": {
+      "type": "object",
+      "properties": {
+        "image": { "$ref": "#/definitions/image" },
+        "config": {
+          "properties": {
+            "pebble": {}
+          },
+          "required": ["pebble"]
+        },
+        "env": { "$ref": "#/definitions/env" }
+      },
+      "required": ["config", "image"]
+    },
+    "coredns": {
+      "type": "object",
+      "properties": {
+        "image": { "$ref": "#/definitions/image" },
+        "env": { "$ref": "#/definitions/env" }
+      },
+      "required": ["image"]
+    }
+  },
+  "required": ["pebble"]
+}
