@@ -11,7 +11,7 @@ pebble:
   config:
     pebble:
       listenAddress: :8443
-      managementListenAddress: :8080
+      managementListenAddress: :8444
       httpPort: 80 # this is the port where outgoing HTTP-01 challenges go
       tlsPort: 443 # this is the port where outgoing TLS-ALPN-01 challenges go
       certificate: /etc/pebble/temp-tls-leaf/cert.pem
@@ -35,10 +35,10 @@ pebble:
     #  value: "0"
 
   nodePort: 32443
-  mgmtNodePort: 32080
+  mgmtNodePort: 32444
 
   ## merge lets you merge in annotations, tolerations, etc, into respective
-  ## resources.
+  ## resource.
   merge:
     deployment: {}
     service: {}
@@ -71,7 +71,7 @@ coredns:
   nodePort: 32053
 
   ## merge lets you merge in annotations, tolerations, etc, into respective
-  ## resources.
+  ## resource.
   merge:
     deployment: {}
     service: {}

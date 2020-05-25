@@ -74,7 +74,7 @@ spec:
             - name: acme
               containerPort: 8443
             - name: acme-mgmt
-              containerPort: 8080
+              containerPort: 8444
           env:
             - name: POD_NAMESPACE
               valueFrom:

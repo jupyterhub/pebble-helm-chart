@@ -20,7 +20,7 @@ spec:
       {{- end }}
     - name: acme-mgmt
       targetPort: acme-mgmt
-      port: 8080
+      port: 8444
       {{- with .Values.pebble.mgmtNodePort }}
       nodePort: {{ . }}
       {{- end }}

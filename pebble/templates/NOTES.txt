@@ -1,11 +1,23 @@
-Pebble's ACME server is available at:
-- https://{{ include "pebble.fullname" . }}.{{ .Release.Namespace }}/dir
+The ACME server is available at:
 
-Pebble's ACME server will generate leaf certificates to
-ACME clients, and sign them with an insecure root cert
-available at:
-- https://{{ include "pebble.fullname" . }}.{{ .Release.Namespace }}:8080/roots/0
+    https://{{ include "pebble.fullname" . }}.{{ .Release.Namespace }}/dir
+    https://localhost:{{ .Values.pebble.nodePort }}/dir
 
-Communication with Pebble's HTTPS endpoints above requires
+The ACME server generates leaf certificates to ACME clients,
+and signs them with an insecure root cert, available at:
+
+    https://{{ include "pebble.fullname" . }}.{{ .Release.Namespace }}:8444/roots/0
+    https://localhost:{{ .Values.pebble.mgmtNodePort }}/roots/0
+
+Communication with the ACME server itself requires
 accepting a root certificate in configmap/{{ include "pebble.fullname" . }}:
-- kubectl get configmap/{{ include "pebble.fullname" . }} --output jsonpath='{index .data "root-cert.pem"}'
+
+    kubectl get configmap/{{ include "pebble.fullname" . }} -o jsonpath="{.data['root-cert\.pem']}"
+{{- if .Values.coredns.enabled }}
+
+A DNS server is running to help you map domain names to
+services in the Kubernetes cluster, and is available at:
+
+    {{ include "pebble.fullname" . }}-coredns.{{ .Release.Namespace }}:53
+    localhost:{{ .Values.coredns.nodePort }}
+{{- end }}

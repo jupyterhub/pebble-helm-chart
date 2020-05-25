@@ -16,20 +16,13 @@ metadata:
     "helm.sh/hook": test-success
 spec:
   initContainers:
-    - name: dns-cname-lookup
+    - name: dns-lookup
       image: curlimages/curl:7.70.0
       command: ["sh", "-c"]
       args:
         - >
           set -ex &&
-          nslookup -type=CNAME demo.test {{ $pebble_coredns_service_host }} | grep svc.cluster.local
-    - name: dns-a-lookup
-      image: curlimages/curl:7.70.0
-      command: ["sh", "-c"]
-      args:
-        - >
-          set -ex &&
-          nslookup -type=A demo.test {{ $pebble_coredns_service_host }} | grep {{ $pebble_service_host }}
+          nslookup demo.test {{ $pebble_coredns_service_host }}
   containers:
     - name: completed
       image: curlimages/curl:7.70.0
