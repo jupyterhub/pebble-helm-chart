@@ -22,7 +22,8 @@ install:
               --write-kubeconfig-mode=644 \
               --disable traefik \
               --disable metrics-server \
-              --disable local-storage
+              --disable local-storage \
+              --disable-network-policy
           export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
       }
 
@@ -37,15 +38,19 @@ jobs:
       script:
         - setup_k3s
         - setup_helm
+        - helm lint pebble --values ci/ci-values.yaml
+        - helm lint pebble --strict --values ci/ci-values.yaml
         - helm install pebble ./pebble --wait --timeout 60s --values ci/ci-values.yaml
         - helm test pebble
       after_success:
         - kubectl get all --all-namespaces
       after_failure:
+        - set +e
         - kubectl get all --all-namespaces
-        - kubectl logs pebble-test -c acme-mgmt
-        - kubectl logs pebble-test -c dns-mgmt
-        - kubectl logs pebble-test -c dns
+        - kubectl logs pebble-test --all-containers --prefix
+        - kubectl logs pebble-coredns-test --all-containers --prefix
+        - kubectl logs deploy/pebble-coredns --all-containers --prefix
+
     - stage: publish
       script:
         - pip install chartpress

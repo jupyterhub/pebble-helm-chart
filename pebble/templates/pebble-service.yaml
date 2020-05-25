@@ -1,0 +1,29 @@
+{{- define "pebble.service" -}}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "pebble.fullname" . }}
+  labels:
+    {{- include "pebble.labels" . | nindent 4 }}
+spec:
+  {{- if or .Values.pebble.nodePort .Values.pebble.mgmtNodePort }}
+  type: NodePort
+  {{- end }}
+  selector:
+    {{- include "pebble.selectorLabels" . | nindent 4 }}
+  ports:
+    - name: acme
+      targetPort: acme
+      port: 443
+      {{- with .Values.pebble.nodePort }}
+      nodePort: {{ . }}
+      {{- end }}
+    - name: acme-mgmt
+      targetPort: acme-mgmt
+      port: 8444
+      {{- with .Values.pebble.mgmtNodePort }}
+      nodePort: {{ . }}
+      {{- end }}
+{{- end }}
+
+{{- include "pebble.service" . | fromYaml | merge .Values.pebble.merge.service | toYaml }}

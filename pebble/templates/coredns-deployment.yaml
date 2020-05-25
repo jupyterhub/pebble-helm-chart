@@ -1,0 +1,60 @@
+{{- define "pebble.coredns.deployment" -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "pebble.fullname" . }}
+  labels:
+    {{- include "pebble.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "pebble.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "pebble.selectorLabels" . | nindent 8 }}
+      annotations:
+        checksum/configmap: {{ include "pebble.coredns.configmap" . | fromYaml | merge .Values.coredns.merge.configmap | toYaml | sha256sum }}
+    spec:
+      terminationGracePeriodSeconds: 1
+
+      volumes:
+        - name: coredns-configmap
+          configMap:
+            name: {{ include "pebble.fullname" . }}
+
+      containers:
+        - name: coredns
+          image: "{{ .Values.coredns.image.repository }}:{{ .Values.coredns.image.tag }}"
+          args: [ "-conf", "/etc/coredns/Corefile" ]
+          volumeMounts:
+            - name: coredns-configmap
+              mountPath: /etc/coredns
+          ports:
+            - name: dns
+              protocol: UDP
+              containerPort: 8053
+            - name: dns-tcp
+              protocol: TCP
+              containerPort: 8053
+          env:
+            - name: PEBBLE_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 8181
+            periodSeconds: 2
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 60
+{{- end }}
+
+{{- if .Values.coredns.enabled -}}
+{{- include "pebble.coredns.deployment" . | fromYaml | merge .Values.coredns.merge.deployment | toYaml }}
+{{- end }}

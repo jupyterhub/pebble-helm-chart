@@ -14,6 +14,8 @@ spec:
     metadata:
       labels:
         {{- include "pebble.selectorLabels" . | nindent 8 }}
+      annotations:
+        checksum/configmap: {{ include "pebble.configmap" . | fromYaml | merge .Values.pebble.merge.configmap | toYaml | sha256sum }}
     spec:
       terminationGracePeriodSeconds: 1
 
@@ -54,27 +56,25 @@ spec:
         # requests etc.
         - name: pebble
           image: "{{ .Values.pebble.image.repository }}:{{ .Values.pebble.image.tag | default .Chart.AppVersion }}"
-          # image: busybox
           volumeMounts:
             - name: pebble-config-and-tls-root
               subPath: pebble-config.json
               mountPath: /etc/pebble/pebble-config.json
             - name: pebble-temp-tls-leaf
               mountPath: /etc/pebble/temp-tls-leaf
-          # command: [ "cat", "/etc/pebble/pebble-config.json" ]
           command:
             - pebble
             - -config
             - /etc/pebble/pebble-config.json
-            {{- with .Values.pebble.command.dnsserver }}
-            - -dnsserver
-            - {{ . | quote}}
+            {{- if .Values.coredns.enabled }}
+            - -dnsserver 
+            - {{ printf "$(%s_COREDNS_SERVICE_HOST):53" (include "pebble.fullname" .) | upper | replace "-" "_" }}
             {{- end }}
           ports:
             - name: acme
               containerPort: 8443
             - name: acme-mgmt
-              containerPort: 8080
+              containerPort: 8444
           env:
             - name: POD_NAMESPACE
               valueFrom:
@@ -125,68 +125,6 @@ spec:
                         done
                         exit 1
                     fi
-
-        {{- if .Values.challtestsrv.enabled }}
-        # A DNS server that can we make Pebble rely on. It's entries can be
-        # configured through a REST API on the management port, and it can on
-        # startup be configured to let all DNS lookups go to a cetain IP. A
-        # common use is to make it go to the IP in the Kubernetes provided
-        # environment variables like $(MYSVC_SERVICE_HOST).
-        - name: challtestsrv
-          image: "{{ .Values.challtestsrv.image.repository }}:{{ .Values.challtestsrv.image.tag | default .Chart.AppVersion }}"
-          # command ref: https://github.com/letsencrypt/pebble/tree/master/cmd/pebble-challtestsrv#usage
-          command: [
-            "pebble-challtestsrv",
-            "-management", ":8081",
-            "-dns01", ":8053",
-            "-tlsalpn01", "",
-            "-http01", "",
-            "-https01", "",
-            "-defaultIPv4", {{ .Values.challtestsrv.command.defaultIPv4 | quote }},
-            "-defaultIPv6", {{ .Values.challtestsrv.command.defaultIPv6 | quote }},
-          ]
-          ports:
-            - name: dns-udp
-              protocol: UDP
-              containerPort: 8053
-            - name: dns-tcp
-              protocol: TCP
-              containerPort: 8053
-            - name: dns-mgmt
-              containerPort: 8081
-          env:
-            - name: POD_NAMESPACE
-              valueFrom:
-                fieldRef:
-                  fieldPath: "metadata.namespace"
-            {{- with .Values.challtestsrv.env }}
-            {{- . | toYaml | nindent 12 }}
-            {{- end }}
-          readinessProbe:
-            tcpSocket:
-              port: dns-tcp
-            periodSeconds: 2
-        
-        {{- if .Values.challtestsrv.initPostRequests }}
-        - name: challtestsrv-initializer
-          image: busybox:1.31
-          command: [ "sh", "-c" ]
-          args:
-            - {{ range .Values.challtestsrv.initPostRequests }}wget --post-data {{ .data | toJson | squote }} localhost:8081/{{ .path }} && {{ end }} touch /tmp/signal-ready && sleep infinity
-          env:
-            - name: POD_NAMESPACE
-              valueFrom:
-                fieldRef:
-                  fieldPath: "metadata.namespace"
-            {{- with .Values.challtestsrv.env }}
-            {{- . | toYaml | nindent 12 }}
-            {{- end }}
-          readinessProbe:
-            exec:
-              command: ["cat", "/tmp/signal-ready"]
-            periodSeconds: 2
-        {{- end }}
-        {{- end }}
 {{- end }}
 
-{{- include "pebble.deployment" . | fromYaml | merge .Values.merge.deployment | toYaml }}
+{{- include "pebble.deployment" . | fromYaml | merge .Values.pebble.merge.deployment | toYaml }}

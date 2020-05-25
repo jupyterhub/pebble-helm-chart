@@ -1,25 +1,40 @@
 {{/* vim: set filetype=mustache: */}}
 
 {{/*
+Extracts a component name from active template's filename to
+create a suffix, so for a file named "coredns-configmap.yaml",
+the extracted suffix becomes "-coredns" and a file named
+"pebble-configmap.yaml" the extracted suffix becomes "".
+*/}}
+{{- define "pebble.componentSuffix" }}
+{{- $names_in_filename := .Template.Name | base | trimSuffix ".yaml" | splitList "-" | initial }}
+{{- $names_in_filename := without $names_in_filename "pebble" }}
+{{- prepend $names_in_filename "" | join "-" }}
+{{- end }}
+
+{{/*
 Create a default fully qualified app name.
 If release name contains chart name it will be used as
 a full name.
 */}}
 {{- define "pebble.fullname" -}}
+{{ print (include "pebble.fullnameHelper" .) (include "pebble.componentSuffix" .) | trunc 63 | trimSuffix "-" }}
+{{- end }}
+{{- define "pebble.fullnameHelper" -}}
 {{- if .Values.fullnameOverride }}
-{{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" }}
+{{- .Values.fullnameOverride }}
 {{- else }}
 {{- if contains .Chart.Name .Release.Name }}
-{{- .Release.Name | trunc 63 | trimSuffix "-" }}
+{{- .Release.Name }}
 {{- else }}
-{{- printf "%s-%s" .Release.Name .Chart.Name | trunc 63 | trimSuffix "-" }}
+{{- printf "%s-%s" .Release.Name .Chart.Name }}
 {{- end }}
 {{- end }}
 {{- end }}
 
 {{/* Selector labels */}}
 {{- define "pebble.selectorLabels" -}}
-app.kubernetes.io/name: {{ .Chart.Name }}
+app.kubernetes.io/name: {{ print .Chart.Name (include "pebble.componentSuffix" .) | trunc 63 | trimSuffix "-" }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 

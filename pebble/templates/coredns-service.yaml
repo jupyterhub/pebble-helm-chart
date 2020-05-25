@@ -1,0 +1,33 @@
+{{- define "pebble.coredns.service" -}}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "pebble.fullname" . }}
+  labels:
+    {{- include "pebble.labels" . | nindent 4 }}
+spec:
+  {{- if .Values.coredns.nodePort }}
+  type: NodePort
+  {{- end }}
+  selector:
+    {{- include "pebble.selectorLabels" . | nindent 4 }}
+  ports:
+    - name: dns
+      targetPort: dns
+      protocol: UDP
+      port: 53
+      {{- with .Values.coredns.nodePort }}
+      nodePort: {{ . }}
+      {{- end }}
+    - name: dns-tcp
+      targetPort: dns-tcp
+      protocol: TCP
+      port: 53
+      {{- with .Values.coredns.nodePort }}
+      nodePort: {{ . }}
+      {{- end }}
+{{- end }}
+
+{{- if .Values.coredns.enabled -}}
+{{- include "pebble.coredns.service" . | fromYaml | merge .Values.coredns.merge.service | toYaml }}
+{{- end }}

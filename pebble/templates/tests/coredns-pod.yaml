@@ -1,0 +1,33 @@
+{{- /*
+To avoid needing to wait for a slow startup of Kubernetes cluster's DNS server,
+we use the IP addresses instead. The $pebble_svc_host will render to
+$(PEBBLE_SERVICE_HOST) which in turn will expand by kubelet to the Kubernetes
+service IP.
+*/ -}}
+{{- $pebble_coredns_service_host := printf "$(%s_SERVICE_HOST)" (include "pebble.fullname" .) | upper | replace "-" "_" -}}
+{{- $pebble_service_host := $pebble_coredns_service_host | replace "_COREDNS" "" -}}
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "{{ include "pebble.fullname" . }}-test"
+  labels:
+    {{- include "pebble.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": test-success
+spec:
+  initContainers:
+    - name: dns-lookup
+      image: curlimages/curl:7.70.0
+      command: ["sh", "-c"]
+      args:
+        - >
+          set -ex &&
+          nslookup demo.test {{ $pebble_coredns_service_host }}
+  containers:
+    - name: completed
+      image: curlimages/curl:7.70.0
+      command: ["sh", "-c"]
+      args:
+        - >
+          echo "Success!"
+  restartPolicy: Never
