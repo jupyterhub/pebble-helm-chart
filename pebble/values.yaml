@@ -1,13 +1,13 @@
-# Values to render the Helm templates.
+## Values to render the Helm templates.
 fullnameOverride: ""
 
 pebble:
   image:
-    # repository ref: https://hub.docker.com/r/letsencrypt/pebble
+    ## repository ref: https://hub.docker.com/r/letsencrypt/pebble
     repository: letsencrypt/pebble
     tag: "" # default is the chart's appVersion, this is an override
 
-  # config ref: https://github.com/letsencrypt/pebble/blob/52b92744eaad895ac25b19dae429c0bdd134b764/cmd/pebble/main.go#L17
+  ## config ref: https://github.com/letsencrypt/pebble/blob/52b92744eaad895ac25b19dae429c0bdd134b764/cmd/pebble/main.go#L17
   config:
     pebble:
       listenAddress: :8443
@@ -25,14 +25,14 @@ pebble:
     - name: PEBBLE_VA_NOSLEEP
       value: "1"
     ## ref: https://github.com/letsencrypt/pebble#invalid-anti-replay-nonce-errors
-    #- name: PEBBLE_WFE_NONCEREJECT
-    #  value: "0"
-    ## ref: https://github.com/letsencrypt/pebble#skipping-validation
-    #- name: PEBBLE_VA_ALWAYS_VALID
-    #  value: "0"
+    - name: PEBBLE_WFE_NONCEREJECT
+      value: "0"
     ## ref: https://github.com/letsencrypt/pebble#authorization-reuse
-    #- name: PEBBLE_AUTHZREUSE
-    #  value: "0"
+    - name: PEBBLE_AUTHZREUSE
+      value: "0"
+    # ## ref: https://github.com/letsencrypt/pebble#skipping-validation
+    # - name: PEBBLE_VA_ALWAYS_VALID
+    #   value: "0"
 
   nodePort: 32443
   mgmtNodePort: 32444
@@ -50,6 +50,7 @@ pebble:
 coredns:
   enabled: true
 
+  ## image ref: https://hub.docker.com/r/coredns/coredns/tags
   image:
     repository: coredns/coredns
     tag: 1.6.9
