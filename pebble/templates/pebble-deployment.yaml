@@ -84,47 +84,13 @@ spec:
             {{- . | toYaml | nindent 12 }}
             {{- end }}
           readinessProbe:
-            # The goal of this readiness probe are:
-            # - to not clutter logs
-            # - react quickly (<0.2s) on ready
-            # - react decently (<2s) on not ready
-            timeoutSeconds: 60
-            periodSeconds: 1
-            successThreshold: 1
-            failureThreshold: 1
+            periodSeconds: 2
             exec:
               command:
                 - sh
                 - -c
                 - |
-                    if [ -e /ready-signal ]
-                    then
-                        n=0
-                        while [ $n -lt 25 ]
-                        do
-                            if [ "$(netstat -tl | grep 8443)" = "" ]
-                            then
-                                rm /ready-signal
-                                exit 1
-                            fi
-                            sleep 2s
-                            n=$((n+1))
-                        done
-                        exit 0
-                    else
-                        n=0
-                        while [ $n -lt 250 ]
-                        do
-                            if [ "$(netstat -tl | grep 8443)" != "" ]
-                            then
-                                touch /ready-signal
-                                exit 0
-                            fi
-                            sleep 0.2s
-                            n=$((n+1))
-                        done
-                        exit 1
-                    fi
+                    [ "$(netstat -tl | grep 8443)" != "" ] || exit 1
 {{- end }}
 
 {{- include "pebble.deployment" . | fromYaml | merge .Values.pebble.merge.deployment | toYaml }}
