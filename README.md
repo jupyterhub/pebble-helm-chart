@@ -125,7 +125,7 @@ pebble:
       value: "0"
     ## ref: https://github.com/letsencrypt/pebble#authorization-reuse
     - name: PEBBLE_AUTHZREUSE
-      value: "0"
+      value: "100"
 ```
 
 See [Pebble's documentation](https://github.com/letsencrypt/pebble#testing-at-full-speed) for more info about its mischievous behavior.

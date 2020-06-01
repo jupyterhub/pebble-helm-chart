@@ -29,7 +29,7 @@ pebble:
       value: "0"
     ## ref: https://github.com/letsencrypt/pebble#authorization-reuse
     - name: PEBBLE_AUTHZREUSE
-      value: "0"
+      value: "100"
     # ## ref: https://github.com/letsencrypt/pebble#skipping-validation
     # - name: PEBBLE_VA_ALWAYS_VALID
     #   value: "0"
