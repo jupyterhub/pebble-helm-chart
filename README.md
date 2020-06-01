@@ -117,9 +117,15 @@ The default of this Helm chart seen below configures Pebble to ensure speedy cer
 ```yaml
 pebble:
   env:
-    # ref: https://github.com/letsencrypt/pebble#testing-at-full-speed
+    ## ref: https://github.com/letsencrypt/pebble#testing-at-full-speed
     - name: PEBBLE_VA_NOSLEEP
       value: "1"
+    ## ref: https://github.com/letsencrypt/pebble#invalid-anti-replay-nonce-errors
+    - name: PEBBLE_WFE_NONCEREJECT
+      value: "0"
+    ## ref: https://github.com/letsencrypt/pebble#authorization-reuse
+    - name: PEBBLE_AUTHZREUSE
+      value: "0"
 ```
 
 See [Pebble's documentation](https://github.com/letsencrypt/pebble#testing-at-full-speed) for more info about its mischievous behavior.
