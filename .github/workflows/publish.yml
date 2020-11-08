@@ -25,9 +25,8 @@ jobs:
 
       - name: Install dependencies (chartpress, helm)
         run: |
-          . ./ci/common
-          setup_helm
           pip install --no-cache-dir chartpress
+          curl -sf https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash
 
       - name: Setup push rights to jupyterhub/helm-chart
         # This was setup by...
