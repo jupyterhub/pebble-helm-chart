@@ -47,3 +47,5 @@ jobs:
       - name: Publish images and chart with chartpress
         run: |
           ./ci/publish
+        env:
+          GITHUB_REPOSITORY: "${{ github.repository }}"
