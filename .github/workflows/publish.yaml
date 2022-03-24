@@ -1,32 +1,40 @@
----
+# This is a GitHub workflow defining a set of jobs with a set of steps.
+# ref: https://docs.github.com/en/actions/learn-github-actions/workflow-syntax-for-github-actions
+#
+# This workflow will publish the Helm chart to jupyterhub/helm-chart's gh-pages
+# branch, which acts like a Helm chart repository (a static website with
+# index.yaml following a certain syntax).
+#
 name: Publish
 
 on:
   push:
     branches:
       - "main"
-      - "master"
+    paths-ignore:
+      - "**.md"
+      - ".github/workflows/*"
+      - "!.github/workflows/publish.yaml"
     tags:
       - "**"
 
 jobs:
-
   publish:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           # chartpress requires the full history
           fetch-depth: 0
 
-      - uses: actions/setup-python@v2
+      - uses: actions/setup-python@v3
         with:
-          python-version: '3.8'
+          python-version: "3.10"
 
       - name: Install dependencies (chartpress, helm)
         run: |
-          pip install --no-cache-dir chartpress
-          curl -sf https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash
+          pip install chartpress
+          curl -sf https://raw.githubusercontent.com/helm/helm/HEAD/scripts/get-helm-3 | bash
 
       - name: Setup push rights to jupyterhub/helm-chart
         # This was setup by...
@@ -47,8 +55,6 @@ jobs:
       - name: Configure a git user
         # Having a user.email and user.name configured with git is required to
         # make commits, which is something chartpress does when publishing.
-        # While Travis CI had a dummy user by default, GitHub Actions doesn't
-        # and require this explicitly setup.
         run: |
           git config --global user.email "github-actions@example.local"
           git config --global user.name "GitHub Actions user"

@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft-07/schema#",
-  "$id": "https://github.com/jupyterhub/pebble-helm-chart/blob/master/pebble/values.schema.json",
+  "$id": "https://github.com/jupyterhub/pebble-helm-chart/blob/HEAD/pebble/values.schema.json",
 
   "definitions": {
     "image": {

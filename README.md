@@ -1,7 +1,8 @@
 # Pebble Helm chart - Let's Encrypt for unreachable CI environment with Kubernetes!
 
-[![TravisCI (.com) build status](https://img.shields.io/travis/com/jupyterhub/pebble-helm-chart/master?logo=travis)](https://travis-ci.com/jupyterhub/pebble-helm-chart)
-[![Latest stable release of the Helm chart](https://img.shields.io/badge/dynamic/json.svg?label=version&url=https://jupyterhub.github.io/helm-chart/info.json&query=$.pebble.stable&colorB=orange&logo=helm)](https://jupyterhub.github.io/helm-chart/#pebble)
+[![GitHub Workflow Status - Test](https://img.shields.io/github/workflow/status/jupyterhub/pebble-helm-chart/test?logo=github&label=tests)](https://github.com/jupyterhub/zero-to-jupyterhub-k8s/actions)
+[![Latest stable release of the Helm chart](https://img.shields.io/badge/dynamic/json.svg?label=stable&url=https://jupyterhub.github.io/helm-chart/info.json&query=$.pebble.stable&colorB=orange&logo=helm)](https://jupyterhub.github.io/helm-chart#pebble)
+[![Latest development release of the Helm chart](https://img.shields.io/badge/dynamic/json.svg?label=dev&url=https://jupyterhub.github.io/helm-chart/info.json&query=$.pebble.latest&colorB=orange&logo=helm)](https://jupyterhub.github.io/helm-chart#development-releases-pebble)
 [![GitHub](https://img.shields.io/badge/issue_tracking-github-blue?logo=github)](https://github.com/jupyterhub/pebble-helm-chart/issues)
 [![Discourse](https://img.shields.io/badge/help_forum-discourse-blue?logo=discourse)](https://discourse.jupyter.org/c/jupyterhub)
 [![Gitter](https://img.shields.io/badge/social_chat-gitter-blue?logo=gitter)](https://gitter.im/jupyterhub/jupyterhub)
@@ -34,9 +35,11 @@ This Helm chart deploys an ACME server (Pebble) and a DNS server ([CoreDNS](http
 ## Installation
 
 ```shell
-helm repo add jupyterhub https://jupyterhub.github.io/helm-chart/
-helm repo update
-helm install pebble jupyterhub/pebble
+# Note that pebble is written twice below, the first is the helm chart name as
+# found in the Helm chart repository while the second is the name of the
+# "helm release" which is the Helm official terminology for an installation
+# of a Helm chart.
+helm install pebble pebble --repo=https://jupyterhub.github.io/helm-chart/
 ```
 
 
@@ -283,7 +286,7 @@ kubectl logs deploy/pebble-coredns --all-containers --prefix
 
 ## Release
 
-No changelog or similar yet. Making a release is as easy as pushing a tagged commit on the master branch.
+No changelog or similar yet. Making a release is as easy as pushing a tagged commit on the main branch.
 
 ```
 git tag -a x.y.z -m x.y.z
