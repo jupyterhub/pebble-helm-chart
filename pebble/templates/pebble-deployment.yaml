@@ -90,7 +90,7 @@ spec:
                 - sh
                 - -c
                 - |
-                    [ "$(netstat -tl | grep 8443)" != "" ] || exit 1
+                    [ "$(netstat -ntl | grep 8443)" != "" ] || exit 1
 {{- end }}
 
 {{- include "pebble.deployment" . | fromYaml | merge .Values.pebble.merge.deployment | toYaml }}
