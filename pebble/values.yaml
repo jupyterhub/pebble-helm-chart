@@ -44,7 +44,6 @@ pebble:
     service: {}
     configmap: {}
 
-
 ## coredns is an optional DNS server that can for example point anything.test
 ## to your-acme-client.your-namespace.svc.cluster.local.
 coredns:

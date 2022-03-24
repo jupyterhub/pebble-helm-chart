@@ -26,7 +26,7 @@ data:
   #       These temporary root certs are exposed through a REST API at /roots/0
   #       on the acme-mgmt port.
   #
-  # ref: https://github.com/letsencrypt/pebble/tree/master/test/certs
+  # ref: https://github.com/letsencrypt/pebble/tree/HEAD/test/certs
   {{- (.Files.Glob "files/root-cert.pem").AsConfig | nindent 2 }}
   {{- (.Files.Glob "files/root-key.pem").AsConfig | nindent 2 }}
 {{- end }}

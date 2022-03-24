@@ -2,11 +2,10 @@
 
 In the README.md we highlight an approach to managing the domain name resolution that Pebble need to make as part of a HTTP-01 ACME challenge. In this document you get some background to other approaches considered along the way that didn't pan out.
 
-
-
 ## Initial theory
 
 ### /etc/hosts and Pod's spec.hostAlias
+
 If you have a local Kubernetes cluster running on your computer or VM and have exposed Kubernetes services through nodePorts, then request you make from the computer or VM will be towards `localhost`. TLS certificates are valid for certain domain names, and the certificates acquired by the ACME client won't be valid for `localhost`.
 
 There is a trick though. By adding the lines below to `/etc/hosts`, you will make `mysvc.mynamespace` and other variants resolve to `127.0.0.1` (localhost), so with those in place, you can send traffic to `mysvc.mynamespace` and have them end up at `localhost`.
@@ -21,14 +20,14 @@ There is a trick though. By adding the lines below to `/etc/hosts`, you will mak
 This kind of configuration in `/etc/hosts` is also possible to do in a CI systems like [TravisCI](https://docs.travis-ci.com/user/hosts/) or in a Kubernetes Pod through the [`spec.hostAlias` configuration](https://kubernetes.io/docs/concepts/services-networking/add-entries-to-pod-etc-hosts-with-host-aliases/).
 
 ### /etc/resolve.conf or Pod.spec.dnsConfig
+
 `/etc/resolve.conf` can be configured to make use of a specific DNS server for various domains and its subdomains. Kubernetes Pods `/etc/resolve.conf` equivalent can also be configured through the [`spec.dnsConfig` configuration](https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/#pod-s-dns-config).
 
 ### Service.spec.externalName
+
 While normal Kubernetes Services get a DNS records in the Kubernetes cluster's primary DNS server pointing to its ClusterIP, the `ExternalName` type of Kubernetes Service will instead get a CNAMEs record but no ClusterIP. For example, a Kubernetes Service named `dogs` with the [`spec.externalName` configuration](https://kubernetes.io/docs/concepts/services-networking/service/#externalname) set to `dogs.info` would make `dogs`, `dogs.mynamespace`, `dogs.mynamespace.svc`, and `dogs.mynamespace.svc.cluster.local` get a CNAME entry for `dogs.info`.
 
 Not having a ClusterIP means that this Kubernetes Service cannot accept any network traffic, it simply influences the Kubernetes cluster's DNS server by adding a CNAME record for the service name to a specified target domain.
-
-
 
 ## The DNS hurdles
 
@@ -36,18 +35,18 @@ To facilitate testing against an ACME server, we need partial control over DNS r
 
 ### Goals
 
-1. __ACME client independent configuration__
+1. **ACME client independent configuration**
 
    Many ways to configuring Pebble and a DNS requires information about the ACME client's Kubernetes Service's ClusterIP. This information in turn can require _hardcoding_ of a ClusterIP or _first installing the ACME client_.
-   
+
    - Hardcoding the ACME clients ClusterIP isn't great because it requires you to be able to do it, as well as knowledge about the Kubernetes clusters allowed network ranges for Services.
    - First installing the ACME client isn't great because it will then startup without the ACME server ready, which may put it in a failure state which needs to be cleared.
 
-2. __Kubernetes wide DNS configuration__
+2. **Kubernetes wide DNS configuration**
 
    While it is essential to have Pebble's DNS lookups resolve to the ACME client's Kubernetes service ClusterIP, a is a nice bonus to let every Kubernetes Pod's lookup resolve in the same way.
 
-3. __Helm chart local configuration only__
+3. **Helm chart local configuration only**
 
    It is good to avoid assuming knowledge about other services, for example what DNS server is used in the Kubernetes cluster. I'm not sure if it could be possible to reach this goal along with goal #2, but I've given up on it as I believe it would introduce too much complexity if I'd pursue it.
 
