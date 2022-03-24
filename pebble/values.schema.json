@@ -7,7 +7,7 @@
       "type": "object",
       "properties": {
         "repository": { "type": "string" },
-        "tag":        { "type": "string" },
+        "tag": { "type": "string" },
         "pullPolicy": { "type": "string" }
       },
       "required": ["repository", "tag"]
@@ -18,13 +18,12 @@
       "items": {
         "type": "object",
         "properties": {
-          "name":  { "type": "string" },
-          "value":  { "type": "string" }
+          "name": { "type": "string" },
+          "value": { "type": "string" }
         },
         "required": ["name", "value"]
       }
     }
-
   },
 
   "type": "object",
