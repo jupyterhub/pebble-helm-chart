@@ -1,6 +1,6 @@
 # Pebble Helm chart - Let's Encrypt for unreachable CI environment with Kubernetes!
 
-[![GitHub Workflow Status - Test](https://img.shields.io/github/workflow/status/jupyterhub/pebble-helm-chart/test?logo=github&label=tests)](https://github.com/jupyterhub/zero-to-jupyterhub-k8s/actions)
+[![GitHub Workflow Status - Test](https://img.shields.io/github/workflow/status/jupyterhub/pebble-helm-chart/Test?logo=github&label=tests)](https://github.com/jupyterhub/pebble-helm-chart/actions)
 [![Latest stable release of the Helm chart](https://img.shields.io/badge/dynamic/json.svg?label=stable&url=https://jupyterhub.github.io/helm-chart/info.json&query=$.pebble.stable&colorB=orange&logo=helm)](https://jupyterhub.github.io/helm-chart#pebble)
 [![Latest development release of the Helm chart](https://img.shields.io/badge/dynamic/json.svg?label=dev&url=https://jupyterhub.github.io/helm-chart/info.json&query=$.pebble.latest&colorB=orange&logo=helm)](https://jupyterhub.github.io/helm-chart#development-releases-pebble)
 [![GitHub](https://img.shields.io/badge/issue_tracking-github-blue?logo=github)](https://github.com/jupyterhub/pebble-helm-chart/issues)
