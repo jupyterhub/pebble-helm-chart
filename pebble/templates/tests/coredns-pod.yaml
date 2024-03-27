@@ -17,7 +17,7 @@ metadata:
 spec:
   initContainers:
     - name: dns-lookup
-      image: curlimages/curl:7.82.0
+      image: quay.io/curl/curl:8.6.0
       command: ["sh", "-c"]
       args:
         - >
@@ -25,7 +25,7 @@ spec:
           nslookup demo.test {{ $pebble_coredns_service_host }}
   containers:
     - name: completed
-      image: curlimages/curl:7.82.0
+      image: quay.io/curl/curl:8.6.0
       command: ["sh", "-c"]
       args:
         - >
