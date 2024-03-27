@@ -33,9 +33,11 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
-        with:
-          # chartpress requires the full history
-          fetch-depth: 0
+
+      - name: Lint chart
+        run: |
+          helm lint pebble --values ci/ci-values.yaml
+          helm lint pebble --strict --values ci/ci-values.yaml
 
       # ref: https://github.com/jupyterhub/action-k3s-helm
       - uses: jupyterhub/action-k3s-helm@v4
@@ -45,16 +47,24 @@ jobs:
           metrics-enabled: false
           traefik-enabled: false
 
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.10"
-
-      - name: Run tests
+      - name: Validate chart templates
         run: |
-          helm lint pebble --values ci/ci-values.yaml
-          helm lint pebble --strict --values ci/ci-values.yaml
           helm template pebble ./pebble --values ci/ci-values.yaml --validate
-          helm install pebble ./pebble --values ci/ci-values.yaml --wait --timeout 60s
+
+      - name: Install chart
+        run: |
+          helm install pebble ./pebble --values ci/ci-values.yaml
+
+      - name: Await install
+        uses: jupyterhub/action-k8s-await-workloads@v3
+        with:
+          workloads: "" # all
+          namespace: "" # default
+          timeout: 60
+          max-restarts: 0
+
+      - name: Test chart
+        run: |
           helm test pebble
 
       # ref: https://github.com/jupyterhub/action-k8s-namespace-report
