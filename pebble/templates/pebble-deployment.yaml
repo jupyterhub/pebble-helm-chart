@@ -74,8 +74,7 @@ spec:
               mountPath: /etc/pebble/pebble-config.json
             - name: pebble-temp-tls-leaf
               mountPath: /etc/pebble/temp-tls-leaf
-          command:
-            - pebble
+          args:
             - -config
             - /etc/pebble/pebble-config.json
             {{- if .Values.coredns.enabled }}
@@ -95,25 +94,12 @@ spec:
             {{- with .Values.pebble.env }}
             {{- . | toYaml | nindent 12 }}
             {{- end }}
-          readinessProbe:
-            periodSeconds: 2
-            exec:
-              command:
-                - sh
-                - -c
-                # The netstat binary used doesn't support --long flag names. The
-                # netstat binary used in the letsencrypt/pebble:v2.3.1 image is:
-                #
-                #   BusyBox v1.28.4 (2018-12-31 18:05:13 UTC) multi-call binary.
-                #
-                # -l means --listening
-                # -t means --tcp
-                # -n means --numeric, which in turn means to not do anything
-                #    extra such as lookup more human readable names for addresses
-                #    or usernames
-                #
-                - |
-                    [ "$(netstat -ltn | grep 8443)" != "" ] || exit 1
+          startupProbe:
+            periodSeconds: 1
+            httpGet:
+              path: /dir
+              port: acme
+              scheme: HTTPS
 {{- end }}
 
 {{- include "pebble.deployment" . | fromYaml | merge .Values.pebble.merge.deployment | toYaml }}
