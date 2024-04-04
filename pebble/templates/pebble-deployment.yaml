@@ -102,4 +102,4 @@ spec:
               scheme: HTTPS
 {{- end }}
 
-{{- include "pebble.deployment" . | fromYaml | merge .Values.pebble.merge.deployment | toYaml }}
+{{- include "pebble.deployment" . | fromYaml | mergeOverwrite .Values.pebble.merge.deployment | toYaml }}
