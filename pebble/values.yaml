@@ -52,7 +52,7 @@ coredns:
   ## image ref: https://hub.docker.com/r/coredns/coredns/tags
   image:
     repository: coredns/coredns
-    tag: "1.11.1"
+    tag: "1.11.3"
 
   ## corefileSegment allow you to inject logic into CoreDNS's configuration
   ## file, called a Corefile. The example below will resolve all lookups of

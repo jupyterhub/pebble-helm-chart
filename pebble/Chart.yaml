@@ -4,7 +4,7 @@ version: 0.0.1-set.by.chartpress
 ## appVersion should be updated along with pebble releases
 ## ref: https://github.com/letsencrypt/pebble/releases
 ##
-appVersion: "2.5.1"
+appVersion: "2.6.0"
 description: |
   This Helm chart bootstraps Pebble: an ACME server (like Let's Encrypt) meant
   for testing. Pebble is also coupled to rely on pebble-challtestsrv as a DNS
