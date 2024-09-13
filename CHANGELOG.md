@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.2
+
+### 1.2.0 - 2024-09-13
+
+With this release, pebble is upgraded from 2.5.1 to 2.6.0, and coredns
+(optional) is upgraded from 1.11.1 to 1.11.3.
+
+#### Maintenance and upkeep improvements
+
+- Update pebble 2.5.1->2.6.0 and coredns 1.11.1->1.11.3 [#41](https://github.com/jupyterhub/pebble-helm-chart/pull/41) ([@consideRatio](https://github.com/consideRatio))
+
 ## 1.1
 
 ### 1.1.0 - 2024-03-27
