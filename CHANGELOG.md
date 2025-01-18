@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.3
+
+### 1.3.0 - 2025-01-19
+
+#### New features added
+
+- Replace minica with openssl (linux/arm64 compatibility) [#44](https://github.com/jupyterhub/pebble-helm-chart/pull/44) ([@manics](https://github.com/manics), [@consideRatio](https://github.com/consideRatio))
+
+#### Documentation improvements
+
+- Add RELEASE.md [#43](https://github.com/jupyterhub/pebble-helm-chart/pull/43) ([@consideRatio](https://github.com/consideRatio))
+
 ## 1.2
 
 ### 1.2.0 - 2024-09-13
