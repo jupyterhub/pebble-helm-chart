@@ -28,19 +28,7 @@ spec:
 
       initContainers:
         - name: pebble-tls-leaf-creation
-          # This image was built Dec 10, 2018, so it probably has the version
-          # 1.0.1 if minica. The latest version of minica is currently version
-          # 1.0.2.
-          #
-          # Related:
-          # - https://github.com/jsha/minica/releases
-          # - https://hub.docker.com/layers/twalter/minica/latest/images/sha256-3c33ecad86f04fb466ee9dfb2a08f15f7f8cc8f6268304137ebd39eac2218aca?context=explore
-          #
-          # FIXME: Transition to use https://github.com/ryantk/docker-minica and
-          #        https://hub.docker.com/layers/ryantk/minica/latest/images/sha256-c67e2c1885d438b5927176295d41aaab8a72dd9e1272ba85054bfc78191d05b0?context=explore
-          #        that has a linked Dockerfile as well and use version 1.0.2.
-          #
-          image: twalter/minica@sha256:3c33ecad86f04fb466ee9dfb2a08f15f7f8cc8f6268304137ebd39eac2218aca
+          image: "{{ .Values.pebble.openssl.repository }}:{{ .Values.pebble.openssl.tag }}"
           volumeMounts:
             - name: pebble-config-and-tls-root
               mountPath: /input
@@ -50,17 +38,9 @@ spec:
             - name: pebble-temp-tls-leaf
               mountPath: /output/localhost
           command:
-            # Avoid "open localhost/key.pem: file exists" as happen if the
-            # container restarts for some reason.
             - sh
-            - -c
-            - >
-                [ -e localhost/key.pem ] || exec
-                minica
-                -ca-cert /input/root-cert.pem
-                -ca-key /input/root-key.pem
-                -domains {{ include "pebble.domains" . | quote }}
-                -ip-addresses 127.0.0.1
+            - /input/certificate.sh
+            - {{ include "pebble.domains" . | quote }}
 
       containers:
         # Pebble is the acme server, but also expose a REST API on the

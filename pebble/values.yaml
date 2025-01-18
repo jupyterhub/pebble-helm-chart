@@ -7,6 +7,11 @@ pebble:
     repository: ghcr.io/letsencrypt/pebble
     tag: "" # default is the chart's appVersion, this is an override
 
+  # Image for creating certificates
+  openssl:
+    repository: docker.io/alpine/openssl
+    tag: "3.3.2"
+
   ## config ref: https://github.com/letsencrypt/pebble/blob/52b92744eaad895ac25b19dae429c0bdd134b764/cmd/pebble/main.go#L17
   config:
     pebble:
