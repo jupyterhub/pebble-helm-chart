@@ -33,6 +33,7 @@
       "type": "object",
       "properties": {
         "image": { "$ref": "#/definitions/image" },
+        "openssl": { "$ref": "#/definitions/image" },
         "config": {
           "properties": {
             "pebble": {}
@@ -41,7 +42,7 @@
         },
         "env": { "$ref": "#/definitions/env" }
       },
-      "required": ["config", "image"]
+      "required": ["config", "image", "openssl"]
     },
     "coredns": {
       "type": "object",

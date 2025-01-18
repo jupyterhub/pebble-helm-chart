@@ -29,6 +29,7 @@ data:
   # ref: https://github.com/letsencrypt/pebble/tree/HEAD/test/certs
   {{- (.Files.Glob "files/root-cert.pem").AsConfig | nindent 2 }}
   {{- (.Files.Glob "files/root-key.pem").AsConfig | nindent 2 }}
+  {{- (.Files.Glob "files/certificate.sh").AsConfig | nindent 2 }}
 {{- end }}
 
 {{- include "pebble.configmap" . | fromYaml | merge .Values.pebble.merge.configmap | toYaml }}
