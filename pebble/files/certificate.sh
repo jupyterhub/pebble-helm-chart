@@ -15,7 +15,7 @@ SAN_DNS=`echo "$@" | awk -F, '{for(i=1; i<=NF; i++) {printf "DNS:" $i ", "}}'`
 
 # Server certificate key
 if [ ! -f "$CERT_DIR/key.pem" ]; then
-  openssl genrsa -out "$CERT_DIR/key.pem" 2048
+    openssl genrsa -out "$CERT_DIR/key.pem" 2048
 fi
 
 # Server certificate
