@@ -50,8 +50,9 @@ helm.sh/chart: {{ printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | 
 {{- define "pebble.domains" -}}
 {{- $name := include "pebble.fullname" . -}}
 {{- $ns := .Release.Namespace -}}
-{{- $name }}
-{{- $name }}.{{ $ns }}
-{{- $name }}.{{ $ns }}.svc
+localhost,
+{{- $name }},
+{{- $name }}.{{ $ns }},
+{{- $name }}.{{ $ns }}.svc,
 {{- $name }}.{{ $ns }}.svc.cluster.local
 {{- end }}
