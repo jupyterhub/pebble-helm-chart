@@ -38,7 +38,6 @@ To facilitate testing against an ACME server, we need partial control over DNS r
 1. **ACME client independent configuration**
 
    Many ways to configuring Pebble and a DNS requires information about the ACME client's Kubernetes Service's ClusterIP. This information in turn can require _hardcoding_ of a ClusterIP or _first installing the ACME client_.
-
    - Hardcoding the ACME clients ClusterIP isn't great because it requires you to be able to do it, as well as knowledge about the Kubernetes clusters allowed network ranges for Services.
    - First installing the ACME client isn't great because it will then startup without the ACME server ready, which may put it in a failure state which needs to be cleared.
 
