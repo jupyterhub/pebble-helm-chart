@@ -1,5 +1,22 @@
 # Changelog
 
+## 1.4
+
+### 1.4.0 - 2025-06-26
+
+#### Enhancements made
+
+- Bump pebble (2.6.0 to 2.8.0), coredns, and openssl [#47](https://github.com/jupyterhub/pebble-helm-chart/pull/47) ([@consideRatio](https://github.com/consideRatio))
+
+#### Contributors to this release
+
+The following people contributed discussions, new ideas, code and documentation contributions, and review.
+See [our definition of contributors](https://github-activity.readthedocs.io/en/latest/#how-does-this-tool-define-contributions-in-the-reports).
+
+([GitHub contributors page for this release](https://github.com/jupyterhub/pebble-helm-chart/graphs/contributors?from=2025-01-18&to=2025-07-26&type=c))
+
+@consideRatio ([activity](https://github.com/search?q=repo%3Ajupyterhub%2Fpebble-helm-chart+involves%3AconsideRatio+updated%3A2025-01-18..2025-07-26&type=Issues)) | @manics ([activity](https://github.com/search?q=repo%3Ajupyterhub%2Fpebble-helm-chart+involves%3Amanics+updated%3A2025-01-18..2025-07-26&type=Issues))
+
 ## 1.3
 
 ### 1.3.0 - 2025-01-19
