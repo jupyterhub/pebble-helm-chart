@@ -41,28 +41,6 @@ To configure the Helm chart, create `my-values.yaml` to pass with the `--values`
 
 Helm charts _render templates_ into Kubernetes yaml files using _configurable values_. Helm charts contain default values, and these can be overridden in a merging process during chart installation and upgrades, for example with the `--values` flag to pass a [YAML](https://www.youtube.com/watch?v=cdLNKUoMc6c) file with values or with the `--set` flag to override specific keys' values.
 
-### Image pull secrets
-
-If you need to pull images from private registries, you can configure global `imagePullSecrets` that will be used for all containers (pebble, coredns, and test pods).
-
-```yaml
-# my-values.yaml
-imagePullSecrets:
-  - name: myregistrykey
-```
-
-First, create the secret in your namespace:
-
-```shell
-kubectl create secret docker-registry myregistrykey \
-  --docker-server=<your-registry-server> \
-  --docker-username=<your-username> \
-  --docker-password=<your-password> \
-  --docker-email=<your-email>
-```
-
-For more information, see the [Kubernetes documentation on pulling images from private registries](https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/).
-
 ### CoreDNS configuration options
 
 Pebble as an ACME server during ACME challenges will make DNS lookups. This Helm chart makes those lookups go through a dedicated [CoreDNS](https://coredns.io/) DNS server that you can configure to manipulate what IP address various lookups should resolve to. Without additional configuration, it will just reference the Kubernetes cluster's DNS server.

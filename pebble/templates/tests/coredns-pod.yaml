@@ -15,7 +15,7 @@ metadata:
   annotations:
     "helm.sh/hook": test-success
 spec:
-  {{- with $.Values.imagePullSecrets }}
+  {{- with .Values.imagePullSecrets }}
   imagePullSecrets:
     {{- toYaml . | nindent 4 }}
   {{- end }}
