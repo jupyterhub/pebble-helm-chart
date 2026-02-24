@@ -15,6 +15,10 @@ metadata:
   annotations:
     "helm.sh/hook": test-success
 spec:
+  {{- with .Values.imagePullSecrets }}
+  imagePullSecrets:
+    {{- . | toYaml | nindent 4 }}
+  {{- end }}
   initContainers:
     - name: dns-lookup
       image: quay.io/curl/curl:8.6.0

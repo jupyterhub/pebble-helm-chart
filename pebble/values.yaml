@@ -1,6 +1,16 @@
 ## Values to render the Helm templates.
 fullnameOverride: ""
 
+## imagePullSecrets provides a global way to configure image pull secrets for
+## all containers. This is useful when pulling images from private registries.
+## ref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
+##
+## Example:
+## imagePullSecrets:
+##   - name: myregistrykey
+##
+imagePullSecrets: []
+
 pebble:
   image:
     ## repository ref: https://hub.docker.com/r/letsencrypt/pebble

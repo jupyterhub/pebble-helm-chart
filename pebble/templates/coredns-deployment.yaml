@@ -18,6 +18,10 @@ spec:
         checksum/configmap: {{ include "pebble.coredns.configmap" . | fromYaml | merge .Values.coredns.merge.configmap | toYaml | sha256sum }}
     spec:
       terminationGracePeriodSeconds: 1
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- . | toYaml | nindent 8 }}
+      {{- end }}
 
       volumes:
         - name: coredns-configmap
