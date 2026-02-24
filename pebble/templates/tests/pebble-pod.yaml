@@ -16,7 +16,7 @@ metadata:
 spec:
   {{- with .Values.imagePullSecrets }}
   imagePullSecrets:
-    {{- toYaml . | nindent 4 }}
+    {{- . | toYaml | nindent 4 }}
   {{- end }}
   initContainers:
     - name: acme
