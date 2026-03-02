@@ -13,7 +13,7 @@ imagePullSecrets: []
 
 pebble:
   image:
-    ## repository ref: https://hub.docker.com/r/letsencrypt/pebble
+    ## repository ref: https://ghcr.io/letsencrypt/pebble
     repository: ghcr.io/letsencrypt/pebble
     tag: "" # default is the chart's appVersion, this is an override
 
