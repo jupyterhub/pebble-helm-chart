@@ -13,7 +13,7 @@ imagePullSecrets: []
 
 pebble:
   image:
-    ## repository ref: https://hub.docker.com/r/letsencrypt/pebble
+    ## repository ref: https://ghcr.io/letsencrypt/pebble
     repository: ghcr.io/letsencrypt/pebble
     tag: "" # default is the chart's appVersion, this is an override
 
@@ -21,7 +21,7 @@ pebble:
   ## ref: https://hub.docker.com/r/alpine/openssl/tags
   openssl:
     repository: docker.io/alpine/openssl
-    tag: "3.5.1"
+    tag: "3.5.5"
 
   ## config ref: https://github.com/letsencrypt/pebble/blob/52b92744eaad895ac25b19dae429c0bdd134b764/cmd/pebble/main.go#L17
   config:
@@ -67,8 +67,8 @@ coredns:
 
   ## image ref: https://hub.docker.com/r/coredns/coredns/tags
   image:
-    repository: coredns/coredns
-    tag: "1.12.2"
+    repository: docker.io/coredns/coredns
+    tag: "1.14.1"
 
   ## corefileSegment allow you to inject logic into CoreDNS's configuration
   ## file, called a Corefile. The example below will resolve all lookups of
