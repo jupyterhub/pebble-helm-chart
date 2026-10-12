@@ -11,7 +11,7 @@
 repos:
   # Autoformat: Bash scripts
   - repo: https://github.com/lovesegfault/beautysh
-    rev: v6.4.2
+    rev: v6.4.3
     hooks:
       - id: beautysh
 
@@ -24,7 +24,7 @@ repos:
 
   # Reset Chart.yaml version and values.yaml image tags
   - repo: https://github.com/jupyterhub/chartpress
-    rev: 2.3.0
+    rev: 2.4.0
     hooks:
       - id: chartpress
 
